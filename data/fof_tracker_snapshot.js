@@ -1,5 +1,5 @@
 window.__FOF_TRACKER_SNAPSHOT__ = {
-  "generated_at": "2026-04-15 08:05:47",
+  "generated_at": "2026-04-15 09:31:28",
   "as_of_date": "2026-04-15",
   "config": {
     "project_name": "公募FOF基金跟踪系统",
@@ -44,24 +44,24 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
     },
     "market_kpis": {
       "week": {
-        "declare_count": 5,
+        "declare_count": 7,
         "accept_count": 0,
         "approval_count": 0,
-        "establish_count": 1,
-        "raise_scale": 0.1
+        "establish_count": 2,
+        "raise_scale": 2.51
       },
       "ytd": {
-        "declare_count": 6,
+        "declare_count": 8,
         "accept_count": 43,
         "approval_count": 19,
-        "establish_count": 57,
-        "raise_scale": 719.63
+        "establish_count": 58,
+        "raise_scale": 722.04
       }
     },
     "stage_counts": [
       {
         "stage": "新申报",
-        "count": 6
+        "count": 8
       },
       {
         "stage": "新受理",
@@ -73,16 +73,58 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
       },
       {
         "stage": "发行中",
-        "count": 15
+        "count": 14
       },
       {
         "stage": "已成立",
-        "count": 57
+        "count": 58
       }
     ],
     "stage_sections": {
       "week": {
         "declare": [
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
+            "approval_date": null,
+            "current_stage": "新申报",
+            "custodian": null,
+            "days_in_stage": 0,
+            "declare_date": "2026-04-15",
+            "declare_to_accept_days": null,
+            "establish_date": null,
+            "fof_type": "普通FOF",
+            "fund_company": "交银施罗德",
+            "fund_name": "交银施罗德惠享多资产六个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": null,
+            "issue_to_establish_days": null,
+            "latest_event_date": "2026-04-15",
+            "product_id": "FOF_c581ebe854",
+            "raise_scale": null,
+            "remarks": "接收材料"
+          },
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
+            "approval_date": null,
+            "current_stage": "新申报",
+            "custodian": null,
+            "days_in_stage": 0,
+            "declare_date": "2026-04-15",
+            "declare_to_accept_days": null,
+            "establish_date": null,
+            "fof_type": "普通FOF",
+            "fund_company": "兴证全球",
+            "fund_name": "兴全盈旭多元配置三个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": null,
+            "issue_to_establish_days": null,
+            "latest_event_date": "2026-04-15",
+            "product_id": "FOF_b6c9123866",
+            "raise_scale": null,
+            "remarks": "接收材料"
+          },
           {
             "accept_date": null,
             "accept_to_approval_days": null,
@@ -195,6 +237,27 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
           {
             "accept_date": null,
             "accept_to_approval_days": null,
+            "approval_date": "2025-11-06",
+            "current_stage": "已成立",
+            "custodian": "平安银行",
+            "days_in_stage": 2,
+            "declare_date": "2025-10-15",
+            "declare_to_accept_days": null,
+            "establish_date": "2026-04-13",
+            "fof_type": "普通FOF",
+            "fund_company": "天弘",
+            "fund_name": "天弘盈安六个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": "2026-03-16",
+            "issue_to_establish_days": 28,
+            "latest_event_date": "2026-04-13",
+            "product_id": "FOF_154db29b52",
+            "raise_scale": 2.41,
+            "remarks": "简易程序：审核期限为20个工作日"
+          },
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
             "approval_date": "2025-12-25",
             "current_stage": "已成立",
             "custodian": "江苏银行",
@@ -217,6 +280,48 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
       },
       "ytd": {
         "declare": [
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
+            "approval_date": null,
+            "current_stage": "新申报",
+            "custodian": null,
+            "days_in_stage": 0,
+            "declare_date": "2026-04-15",
+            "declare_to_accept_days": null,
+            "establish_date": null,
+            "fof_type": "普通FOF",
+            "fund_company": "交银施罗德",
+            "fund_name": "交银施罗德惠享多资产六个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": null,
+            "issue_to_establish_days": null,
+            "latest_event_date": "2026-04-15",
+            "product_id": "FOF_c581ebe854",
+            "raise_scale": null,
+            "remarks": "接收材料"
+          },
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
+            "approval_date": null,
+            "current_stage": "新申报",
+            "custodian": null,
+            "days_in_stage": 0,
+            "declare_date": "2026-04-15",
+            "declare_to_accept_days": null,
+            "establish_date": null,
+            "fof_type": "普通FOF",
+            "fund_company": "兴证全球",
+            "fund_name": "兴全盈旭多元配置三个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": null,
+            "issue_to_establish_days": null,
+            "latest_event_date": "2026-04-15",
+            "product_id": "FOF_b6c9123866",
+            "raise_scale": null,
+            "remarks": "接收材料"
+          },
           {
             "accept_date": null,
             "accept_to_approval_days": null,
@@ -772,6 +877,27 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
           {
             "accept_date": null,
             "accept_to_approval_days": null,
+            "approval_date": "2025-11-06",
+            "current_stage": "已成立",
+            "custodian": "平安银行",
+            "days_in_stage": 2,
+            "declare_date": "2025-10-15",
+            "declare_to_accept_days": null,
+            "establish_date": "2026-04-13",
+            "fof_type": "普通FOF",
+            "fund_company": "天弘",
+            "fund_name": "天弘盈安六个月持有期混合型基金中基金(FOF)",
+            "is_key_company": false,
+            "issue_start_date": "2026-03-16",
+            "issue_to_establish_days": 28,
+            "latest_event_date": "2026-04-13",
+            "product_id": "FOF_154db29b52",
+            "raise_scale": 2.41,
+            "remarks": "简易程序：审核期限为20个工作日"
+          },
+          {
+            "accept_date": null,
+            "accept_to_approval_days": null,
             "approval_date": "2025-12-25",
             "current_stage": "已成立",
             "custodian": "江苏银行",
@@ -957,27 +1083,6 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "product_id": "FOF_90a29bd375",
             "raise_scale": 2.43,
             "remarks": "简易程序：审核期限为20个工作日"
-          },
-          {
-            "accept_date": null,
-            "accept_to_approval_days": null,
-            "approval_date": "2025-12-25",
-            "current_stage": "已成立",
-            "custodian": "中国光大银行",
-            "days_in_stage": 21,
-            "declare_date": "2025-12-04",
-            "declare_to_accept_days": null,
-            "establish_date": "2026-03-25",
-            "fof_type": "普通FOF",
-            "fund_company": "上银",
-            "fund_name": "上银稳健睿享三个月持有期混合型发起式基金中基金(FOF)",
-            "is_key_company": false,
-            "issue_start_date": "2026-02-09",
-            "issue_to_establish_days": 44,
-            "latest_event_date": "2026-03-25",
-            "product_id": "FOF_60fa1b1740",
-            "raise_scale": 0.16,
-            "remarks": "简易程序：审核期限为20个工作日"
           }
         ]
       }
@@ -985,6 +1090,19 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
     "company_rankings": {
       "all": {
         "week": [
+          {
+            "fund_company": "天弘",
+            "action_count": 1,
+            "declare_count": 0,
+            "accept_count": 0,
+            "approval_count": 0,
+            "issue_count": 0,
+            "establish_count": 1,
+            "raise_scale_sum": 2.41,
+            "avg_raise_scale": 2.41,
+            "fastest_establish_days": 28,
+            "latest_event_date": "2026-04-13"
+          },
           {
             "fund_company": "国泰",
             "action_count": 2,
@@ -996,6 +1114,19 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "raise_scale_sum": 0.1,
             "avg_raise_scale": 0.1,
             "fastest_establish_days": 10,
+            "latest_event_date": "2026-04-15"
+          },
+          {
+            "fund_company": "交银施罗德",
+            "action_count": 2,
+            "declare_count": 1,
+            "accept_count": 0,
+            "approval_count": 0,
+            "issue_count": 1,
+            "establish_count": 0,
+            "raise_scale_sum": 0,
+            "avg_raise_scale": null,
+            "fastest_establish_days": null,
             "latest_event_date": "2026-04-15"
           },
           {
@@ -1025,17 +1156,17 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "latest_event_date": "2026-04-13"
           },
           {
-            "fund_company": "交银施罗德",
+            "fund_company": "兴证全球",
             "action_count": 1,
-            "declare_count": 0,
+            "declare_count": 1,
             "accept_count": 0,
             "approval_count": 0,
-            "issue_count": 1,
+            "issue_count": 0,
             "establish_count": 0,
             "raise_scale_sum": 0,
             "avg_raise_scale": null,
             "fastest_establish_days": null,
-            "latest_event_date": "2026-04-13"
+            "latest_event_date": "2026-04-15"
           },
           {
             "fund_company": "华夏",
@@ -1233,19 +1364,6 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "latest_event_date": null
           },
           {
-            "fund_company": "兴证全球",
-            "action_count": 0,
-            "declare_count": 0,
-            "accept_count": 0,
-            "approval_count": 0,
-            "issue_count": 0,
-            "establish_count": 0,
-            "raise_scale_sum": 0,
-            "avg_raise_scale": null,
-            "fastest_establish_days": null,
-            "latest_event_date": null
-          },
-          {
             "fund_company": "创金合信",
             "action_count": 0,
             "declare_count": 0,
@@ -1351,19 +1469,6 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
           },
           {
             "fund_company": "大成",
-            "action_count": 0,
-            "declare_count": 0,
-            "accept_count": 0,
-            "approval_count": 0,
-            "issue_count": 0,
-            "establish_count": 0,
-            "raise_scale_sum": 0,
-            "avg_raise_scale": null,
-            "fastest_establish_days": null,
-            "latest_event_date": null
-          },
-          {
-            "fund_company": "天弘",
             "action_count": 0,
             "declare_count": 0,
             "accept_count": 0,
@@ -1838,12 +1943,12 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "declare_count": 0,
             "accept_count": 1,
             "approval_count": 1,
-            "issue_count": 1,
-            "establish_count": 2,
-            "raise_scale_sum": 17.67,
-            "avg_raise_scale": 8.83,
+            "issue_count": 0,
+            "establish_count": 3,
+            "raise_scale_sum": 20.08,
+            "avg_raise_scale": 6.69,
             "fastest_establish_days": 10,
-            "latest_event_date": "2026-04-01"
+            "latest_event_date": "2026-04-13"
           },
           {
             "fund_company": "建信",
@@ -1860,8 +1965,8 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
           },
           {
             "fund_company": "交银施罗德",
-            "action_count": 3,
-            "declare_count": 0,
+            "action_count": 4,
+            "declare_count": 1,
             "accept_count": 0,
             "approval_count": 1,
             "issue_count": 1,
@@ -1869,7 +1974,7 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "raise_scale_sum": 13.13,
             "avg_raise_scale": 13.13,
             "fastest_establish_days": 15,
-            "latest_event_date": "2026-04-13"
+            "latest_event_date": "2026-04-15"
           },
           {
             "fund_company": "国投瑞银",
@@ -2029,8 +2134,8 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
           },
           {
             "fund_company": "兴证全球",
-            "action_count": 4,
-            "declare_count": 0,
+            "action_count": 5,
+            "declare_count": 1,
             "accept_count": 2,
             "approval_count": 0,
             "issue_count": 1,
@@ -2038,7 +2143,7 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
             "raise_scale_sum": 3.36,
             "avg_raise_scale": 3.36,
             "fastest_establish_days": 15,
-            "latest_event_date": "2026-04-01"
+            "latest_event_date": "2026-04-15"
           },
           {
             "fund_company": "华富",
@@ -3389,6 +3494,48 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
       {
         "accept_date": null,
         "accept_to_approval_days": null,
+        "approval_date": null,
+        "current_stage": "新申报",
+        "custodian": null,
+        "days_in_stage": 0,
+        "declare_date": "2026-04-15",
+        "declare_to_accept_days": null,
+        "establish_date": null,
+        "fof_type": "普通FOF",
+        "fund_company": "交银施罗德",
+        "fund_name": "交银施罗德惠享多资产六个月持有期混合型基金中基金(FOF)",
+        "is_key_company": false,
+        "issue_start_date": null,
+        "issue_to_establish_days": null,
+        "latest_event_date": "2026-04-15",
+        "product_id": "FOF_c581ebe854",
+        "raise_scale": null,
+        "remarks": "接收材料"
+      },
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
+        "approval_date": null,
+        "current_stage": "新申报",
+        "custodian": null,
+        "days_in_stage": 0,
+        "declare_date": "2026-04-15",
+        "declare_to_accept_days": null,
+        "establish_date": null,
+        "fof_type": "普通FOF",
+        "fund_company": "兴证全球",
+        "fund_name": "兴全盈旭多元配置三个月持有期混合型基金中基金(FOF)",
+        "is_key_company": false,
+        "issue_start_date": null,
+        "issue_to_establish_days": null,
+        "latest_event_date": "2026-04-15",
+        "product_id": "FOF_b6c9123866",
+        "raise_scale": null,
+        "remarks": "接收材料"
+      },
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
         "approval_date": "2025-12-05",
         "current_stage": "发行中",
         "custodian": "招商银行",
@@ -3426,6 +3573,27 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         "latest_event_date": "2026-04-14",
         "product_id": "FOF_351b79ea4e",
         "raise_scale": null,
+        "remarks": "简易程序：审核期限为20个工作日"
+      },
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
+        "approval_date": "2025-11-06",
+        "current_stage": "已成立",
+        "custodian": "平安银行",
+        "days_in_stage": 2,
+        "declare_date": "2025-10-15",
+        "declare_to_accept_days": null,
+        "establish_date": "2026-04-13",
+        "fof_type": "普通FOF",
+        "fund_company": "天弘",
+        "fund_name": "天弘盈安六个月持有期混合型基金中基金(FOF)",
+        "is_key_company": false,
+        "issue_start_date": "2026-03-16",
+        "issue_to_establish_days": 28,
+        "latest_event_date": "2026-04-13",
+        "product_id": "FOF_154db29b52",
+        "raise_scale": 2.41,
         "remarks": "简易程序：审核期限为20个工作日"
       },
       {
@@ -3532,72 +3700,51 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         "product_id": "FOF_b2d02b3123",
         "raise_scale": null,
         "remarks": "简易程序：审核期限为20个工作日"
-      },
-      {
-        "accept_date": null,
-        "accept_to_approval_days": null,
-        "approval_date": null,
-        "current_stage": "新申报",
-        "custodian": null,
-        "days_in_stage": 2,
-        "declare_date": "2026-04-13",
-        "declare_to_accept_days": null,
-        "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "广发",
-        "fund_name": "广发悦信稳健3个月持有期混合型基金中基金(FOF)",
-        "is_key_company": false,
-        "issue_start_date": null,
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-13",
-        "product_id": "FOF_7210144644",
-        "raise_scale": null,
-        "remarks": "接收材料"
-      },
-      {
-        "accept_date": null,
-        "accept_to_approval_days": null,
-        "approval_date": null,
-        "current_stage": "新申报",
-        "custodian": null,
-        "days_in_stage": 2,
-        "declare_date": "2026-04-13",
-        "declare_to_accept_days": null,
-        "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "汇添富",
-        "fund_name": "汇添富睿悦6个月持有期混合型基金中基金(FOF)",
-        "is_key_company": true,
-        "issue_start_date": null,
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-13",
-        "product_id": "FOF_05731b89e5",
-        "raise_scale": null,
-        "remarks": "接收材料"
-      },
-      {
-        "accept_date": null,
-        "accept_to_approval_days": null,
-        "approval_date": "2026-02-26",
-        "current_stage": "发行中",
-        "custodian": "中国工商银行",
-        "days_in_stage": 2,
-        "declare_date": "2025-12-26",
-        "declare_to_accept_days": null,
-        "establish_date": null,
-        "fof_type": "ETF-FOF",
-        "fund_company": "申万菱信",
-        "fund_name": "申万菱信多元配置3个月持有期混合型基金中基金(ETF-FOF)",
-        "is_key_company": false,
-        "issue_start_date": "2026-04-13",
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-13",
-        "product_id": "FOF_5c62a602ca",
-        "raise_scale": null,
-        "remarks": "简易程序：审核期限为20个工作日"
       }
     ],
     "in_review_pool": [
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
+        "approval_date": null,
+        "current_stage": "新申报",
+        "custodian": null,
+        "days_in_stage": 0,
+        "declare_date": "2026-04-15",
+        "declare_to_accept_days": null,
+        "establish_date": null,
+        "fof_type": "普通FOF",
+        "fund_company": "交银施罗德",
+        "fund_name": "交银施罗德惠享多资产六个月持有期混合型基金中基金(FOF)",
+        "is_key_company": false,
+        "issue_start_date": null,
+        "issue_to_establish_days": null,
+        "latest_event_date": "2026-04-15",
+        "product_id": "FOF_c581ebe854",
+        "raise_scale": null,
+        "remarks": "接收材料"
+      },
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
+        "approval_date": null,
+        "current_stage": "新申报",
+        "custodian": null,
+        "days_in_stage": 0,
+        "declare_date": "2026-04-15",
+        "declare_to_accept_days": null,
+        "establish_date": null,
+        "fof_type": "普通FOF",
+        "fund_company": "兴证全球",
+        "fund_name": "兴全盈旭多元配置三个月持有期混合型基金中基金(FOF)",
+        "is_key_company": false,
+        "issue_start_date": null,
+        "issue_to_establish_days": null,
+        "latest_event_date": "2026-04-15",
+        "product_id": "FOF_b6c9123866",
+        "raise_scale": null,
+        "remarks": "接收材料"
+      },
       {
         "accept_date": null,
         "accept_to_approval_days": null,
@@ -3616,27 +3763,6 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         "issue_to_establish_days": null,
         "latest_event_date": "2026-04-13",
         "product_id": "FOF_2015141316",
-        "raise_scale": null,
-        "remarks": "接收材料"
-      },
-      {
-        "accept_date": null,
-        "accept_to_approval_days": null,
-        "approval_date": null,
-        "current_stage": "新申报",
-        "custodian": null,
-        "days_in_stage": 2,
-        "declare_date": "2026-04-13",
-        "declare_to_accept_days": null,
-        "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "汇添富",
-        "fund_name": "汇添富睿悦6个月持有期混合型基金中基金(FOF)",
-        "is_key_company": true,
-        "issue_start_date": null,
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-13",
-        "product_id": "FOF_05731b89e5",
         "raise_scale": null,
         "remarks": "接收材料"
       },
@@ -3679,6 +3805,27 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         "issue_to_establish_days": null,
         "latest_event_date": "2026-04-13",
         "product_id": "FOF_7210144644",
+        "raise_scale": null,
+        "remarks": "接收材料"
+      },
+      {
+        "accept_date": null,
+        "accept_to_approval_days": null,
+        "approval_date": null,
+        "current_stage": "新申报",
+        "custodian": null,
+        "days_in_stage": 2,
+        "declare_date": "2026-04-13",
+        "declare_to_accept_days": null,
+        "establish_date": null,
+        "fof_type": "普通FOF",
+        "fund_company": "汇添富",
+        "fund_name": "汇添富睿悦6个月持有期混合型基金中基金(FOF)",
+        "is_key_company": true,
+        "issue_start_date": null,
+        "issue_to_establish_days": null,
+        "latest_event_date": "2026-04-13",
+        "product_id": "FOF_05731b89e5",
         "raise_scale": null,
         "remarks": "接收材料"
       },
@@ -3794,61 +3941,19 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         "current_stage": "已获批",
         "custodian": null,
         "days_in_stage": 14,
-        "declare_date": "2026-02-11",
-        "declare_to_accept_days": 2,
+        "declare_date": "2026-02-10",
+        "declare_to_accept_days": 3,
         "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "大成",
-        "fund_name": "大成多元恒健三个月持有期混合型基金中基金（FOF）",
+        "fof_type": "ETF-FOF",
+        "fund_company": "天弘",
+        "fund_name": "天弘鑫泽3个月持有期混合型基金中基金（ETF-FOF）",
         "is_key_company": false,
         "issue_start_date": null,
         "issue_to_establish_days": null,
         "latest_event_date": "2026-04-01",
-        "product_id": "FOF_e6fd2dfc66",
+        "product_id": "FOF_3cc1b75c86",
         "raise_scale": null,
         "remarks": "简易程序：审核期限为20个工作日"
-      },
-      {
-        "accept_date": "2026-02-13",
-        "accept_to_approval_days": 47,
-        "approval_date": "2026-04-01",
-        "current_stage": "已获批",
-        "custodian": null,
-        "days_in_stage": 14,
-        "declare_date": "2026-02-06",
-        "declare_to_accept_days": 7,
-        "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "汇添富",
-        "fund_name": "汇添富稳利多资产三个月持有期混合型基金中基金（FOF）",
-        "is_key_company": true,
-        "issue_start_date": null,
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-01",
-        "product_id": "FOF_26fbb1289b",
-        "raise_scale": null,
-        "remarks": "简易程序：审核期限为20个工作日"
-      },
-      {
-        "accept_date": "2026-04-01",
-        "accept_to_approval_days": null,
-        "approval_date": null,
-        "current_stage": "新受理",
-        "custodian": null,
-        "days_in_stage": 14,
-        "declare_date": "2026-03-25",
-        "declare_to_accept_days": 7,
-        "establish_date": null,
-        "fof_type": "普通FOF",
-        "fund_company": "招商",
-        "fund_name": "招商智通优选3个月持有期混合型基金中基金（FOF）",
-        "is_key_company": false,
-        "issue_start_date": null,
-        "issue_to_establish_days": null,
-        "latest_event_date": "2026-04-01",
-        "product_id": "FOF_44e400dbe0",
-        "raise_scale": null,
-        "remarks": "接收材料、受理通知"
       }
     ],
     "trends": {
@@ -3890,13 +3995,55 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
         },
         {
           "label": "04/09-04/15",
-          "establish_count": 1,
-          "raise_scale": 0.1
+          "establish_count": 2,
+          "raise_scale": 2.51
         }
       ]
     }
   },
   "products": [
+    {
+      "accept_date": null,
+      "accept_to_approval_days": null,
+      "approval_date": null,
+      "current_stage": "新申报",
+      "custodian": null,
+      "days_in_stage": 0,
+      "declare_date": "2026-04-15",
+      "declare_to_accept_days": null,
+      "establish_date": null,
+      "fof_type": "普通FOF",
+      "fund_company": "交银施罗德",
+      "fund_name": "交银施罗德惠享多资产六个月持有期混合型基金中基金(FOF)",
+      "is_key_company": false,
+      "issue_start_date": null,
+      "issue_to_establish_days": null,
+      "latest_event_date": "2026-04-15",
+      "product_id": "FOF_c581ebe854",
+      "raise_scale": null,
+      "remarks": "接收材料"
+    },
+    {
+      "accept_date": null,
+      "accept_to_approval_days": null,
+      "approval_date": null,
+      "current_stage": "新申报",
+      "custodian": null,
+      "days_in_stage": 0,
+      "declare_date": "2026-04-15",
+      "declare_to_accept_days": null,
+      "establish_date": null,
+      "fof_type": "普通FOF",
+      "fund_company": "兴证全球",
+      "fund_name": "兴全盈旭多元配置三个月持有期混合型基金中基金(FOF)",
+      "is_key_company": false,
+      "issue_start_date": null,
+      "issue_to_establish_days": null,
+      "latest_event_date": "2026-04-15",
+      "product_id": "FOF_b6c9123866",
+      "raise_scale": null,
+      "remarks": "接收材料"
+    },
     {
       "accept_date": null,
       "accept_to_approval_days": null,
@@ -4022,6 +4169,27 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
       "product_id": "FOF_3aecbb0c80",
       "raise_scale": null,
       "remarks": "变更注册(简易)：审核期限为20个工作日"
+    },
+    {
+      "accept_date": null,
+      "accept_to_approval_days": null,
+      "approval_date": "2025-11-06",
+      "current_stage": "已成立",
+      "custodian": "平安银行",
+      "days_in_stage": 2,
+      "declare_date": "2025-10-15",
+      "declare_to_accept_days": null,
+      "establish_date": "2026-04-13",
+      "fof_type": "普通FOF",
+      "fund_company": "天弘",
+      "fund_name": "天弘盈安六个月持有期混合型基金中基金(FOF)",
+      "is_key_company": false,
+      "issue_start_date": "2026-03-16",
+      "issue_to_establish_days": 28,
+      "latest_event_date": "2026-04-13",
+      "product_id": "FOF_154db29b52",
+      "raise_scale": 2.41,
+      "remarks": "简易程序：审核期限为20个工作日"
     },
     {
       "accept_date": null,
@@ -5450,27 +5618,6 @@ window.__FOF_TRACKER_SNAPSHOT__ = {
       "product_id": "FOF_bf4405e495",
       "raise_scale": null,
       "remarks": "接收材料、受理通知"
-    },
-    {
-      "accept_date": null,
-      "accept_to_approval_days": null,
-      "approval_date": "2025-11-06",
-      "current_stage": "发行中",
-      "custodian": "平安银行",
-      "days_in_stage": 30,
-      "declare_date": "2025-10-15",
-      "declare_to_accept_days": null,
-      "establish_date": null,
-      "fof_type": "普通FOF",
-      "fund_company": "天弘",
-      "fund_name": "天弘盈安六个月持有期混合型基金中基金(FOF)",
-      "is_key_company": false,
-      "issue_start_date": "2026-03-16",
-      "issue_to_establish_days": null,
-      "latest_event_date": "2026-03-16",
-      "product_id": "FOF_154db29b52",
-      "raise_scale": null,
-      "remarks": "简易程序：审核期限为20个工作日"
     },
     {
       "accept_date": "2026-03-16",
