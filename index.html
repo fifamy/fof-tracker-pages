@@ -38,6 +38,7 @@
               <button class="tab" data-tab="tracker">流程跟踪</button>
               <button class="tab" data-tab="companies">公司竞争格局</button>
               <button class="tab" data-tab="key">重点公司对比</button>
+              <button class="tab" data-tab="chase">华夏追赶测算</button>
               <button class="tab" data-tab="detail">产品详情</button>
             </div>
           </section>
@@ -167,6 +168,46 @@
               <div id="key-company-progress"></div>
             </div>
             <div class="company-card-grid" id="key-company-cards"></div>
+          </section>
+
+          <section class="panel" id="panel-chase">
+            <div class="section-head">
+              <div>
+                <h2>华夏追赶头部前三测算</h2>
+                <p>按“今年已成立 + 当前在途”为年底保底数量，反推华夏进入行业前三所需的新增申报量与最晚申报时点。</p>
+              </div>
+            </div>
+            <div class="kpi-grid chase-kpi-grid" id="chase-kpi-grid"></div>
+            <div class="card chase-brief" id="chase-brief"></div>
+            <div class="chase-layout">
+              <div class="card">
+                <div class="section-head compact">
+                  <div>
+                    <h2>头部公司数量差距</h2>
+                    <p>按年底保底数量排序，直接看华夏与头部公司的数量和规模差距。</p>
+                  </div>
+                </div>
+                <div id="chase-raceboard"></div>
+              </div>
+              <div class="card">
+                <div class="section-head compact">
+                  <div>
+                    <h2>华夏现有储备与测算假设</h2>
+                    <p>列示华夏当前在途产品，并说明追赶测算的核心假设。</p>
+                  </div>
+                </div>
+                <div id="chase-context"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-head">
+                <div>
+                  <h2>头部公司明细表</h2>
+                  <p>查看已成立数、在途数、年底保底数、募集规模及平均申报到成立耗时。</p>
+                </div>
+              </div>
+              <div class="table-wrap" id="chase-table"></div>
+            </div>
           </section>
 
           <section class="panel" id="panel-detail">

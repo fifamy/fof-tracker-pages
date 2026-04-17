@@ -654,6 +654,231 @@ function renderKeyCompanyCards() {
   bindClickableRows(container);
 }
 
+function renderHuaxiaChase() {
+  const dashboard = state.data.summary.huaxia_chase;
+  const kpiContainer = document.getElementById("chase-kpi-grid");
+  const briefContainer = document.getElementById("chase-brief");
+  const raceContainer = document.getElementById("chase-raceboard");
+  const contextContainer = document.getElementById("chase-context");
+  const tableContainer = document.getElementById("chase-table");
+
+  if (!dashboard) {
+    kpiContainer.innerHTML = `<div class="empty-box">暂无华夏追赶测算数据。</div>`;
+    briefContainer.innerHTML = `<div class="empty-box">暂无华夏追赶测算数据。</div>`;
+    raceContainer.innerHTML = `<div class="empty-box">暂无头部公司对比数据。</div>`;
+    contextContainer.innerHTML = `<div class="empty-box">暂无华夏储备数据。</div>`;
+    tableContainer.innerHTML = `<div class="empty-box">暂无头部公司明细。</div>`;
+    return;
+  }
+
+  const focus = dashboard.focus_company_snapshot || {};
+  const target = dashboard.target || {};
+  const cutoffCompanies = target.cutoff_companies || [];
+  const benchmarkCompanies = target.benchmark_companies || [];
+  const latestDeclareDate = fmtDate(target.latest_declare_date);
+  const deadlineNote =
+    target.days_left_to_latest_declare == null
+      ? "当前样本不足，暂未反推出申报时点"
+      : target.days_left_to_latest_declare >= 0
+        ? `距离最晚申报日还有 ${target.days_left_to_latest_declare} 天`
+        : `已比最晚申报日晚 ${Math.abs(target.days_left_to_latest_declare)} 天`;
+
+  const kpis = [
+    {
+      label: "华夏年底保底数",
+      value: focus.projected_floor_count ?? 0,
+      note: `已成立 ${focus.establish_count ?? 0} · 在途 ${focus.pipeline_count ?? 0}`,
+    },
+    {
+      label: "当前前三门槛",
+      value: target.cutoff_floor_count ?? 0,
+      note: cutoffCompanies.length ? `门槛公司：${cutoffCompanies.join("、")}` : "按第3名门槛测算",
+    },
+    {
+      label: "并列前三还差",
+      value: target.required_new_declares_for_tie ?? 0,
+      note: "按并列进入前三口径测算",
+    },
+    {
+      label: "稳居前三还差",
+      value: target.required_new_declares_for_clear ?? 0,
+      note: "按单独站稳前三口径测算",
+    },
+    {
+      label: "头部平均申报到成立",
+      value: target.benchmark_avg_declare_to_establish_days != null ? `${fmtNum(target.benchmark_avg_declare_to_establish_days)} 天` : "—",
+      note: benchmarkCompanies.length ? `样本来自 ${benchmarkCompanies.join("、")}` : "暂无可用样本",
+    },
+    {
+      label: "最晚申报日",
+      value: latestDeclareDate,
+      note: deadlineNote,
+    },
+  ];
+  kpiContainer.innerHTML = kpis
+    .map(
+      (item) => `
+        <article class="kpi-card chase-kpi-card">
+          <div class="kpi-label">${escapeHtml(item.label)}</div>
+          <div class="kpi-value">${escapeHtml(item.value)}</div>
+          <div class="kpi-note">${escapeHtml(item.note)}</div>
+        </article>
+      `
+    )
+    .join("");
+
+  const targetLabel = cutoffCompanies.length ? cutoffCompanies.join("、") : `第 ${target.cutoff_rank || 3} 名公司`;
+  const latestDeclareSentence = target.latest_declare_date
+    ? `若希望新增产品在 ${fmtDate(target.year_end)} 前尽可能完成成立，最晚应在 ${fmtDate(target.latest_declare_date)} 前完成申报。`
+    : "当前可用于估算的“申报到成立”样本不足，暂无法反推最晚申报日。";
+
+  briefContainer.innerHTML = `
+    <div class="chase-brief-grid">
+      <div class="chase-brief-main">
+        <div class="progress-panel-kicker">Top 3 Catch-up</div>
+        <h3>华夏若要在 ${escapeHtml(String(target.year_end || state.data.as_of_date).slice(0, 4))} 年追上头部前三，核心矛盾是数量缺口。</h3>
+        <p>
+          当前前三门槛由 ${escapeHtml(targetLabel)} 拉到 <strong>${escapeHtml(target.cutoff_floor_count ?? 0)} 只</strong>。
+          华夏当前年底保底数量为 <strong>${escapeHtml(focus.projected_floor_count ?? 0)} 只</strong>，
+          若按并列进入前三口径，仍需新增申报 <strong>${escapeHtml(target.required_new_declares_for_tie ?? 0)} 只</strong>；
+          若希望单独站稳前三，则需新增申报 <strong>${escapeHtml(target.required_new_declares_for_clear ?? 0)} 只</strong>。
+        </p>
+        <p>
+          头部前三已成立产品平均“申报到成立”耗时约 <strong>${escapeHtml(
+            target.benchmark_avg_declare_to_establish_days != null ? `${fmtNum(target.benchmark_avg_declare_to_establish_days)} 天` : "—"
+          )}</strong>。${escapeHtml(latestDeclareSentence)}
+        </p>
+      </div>
+      <div class="chase-brief-side">
+        <div class="chase-stat-card">
+          <span>华夏当前排名</span>
+          <strong>#${escapeHtml(focus.rank ?? dashboard.focus_company_rank ?? "—")}</strong>
+        </div>
+        <div class="chase-stat-card">
+          <span>并列前三缺口</span>
+          <strong>${escapeHtml(target.required_new_declares_for_tie ?? 0)} 只</strong>
+        </div>
+        <div class="chase-stat-card">
+          <span>申报窗口</span>
+          <strong>${escapeHtml(
+            target.days_left_to_latest_declare == null
+              ? "—"
+              : target.days_left_to_latest_declare >= 0
+                ? `${target.days_left_to_latest_declare} 天`
+                : `逾期 ${Math.abs(target.days_left_to_latest_declare)} 天`
+          )}</strong>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const raceRows = dashboard.head_companies || [];
+  if (!raceRows.length) {
+    raceContainer.innerHTML = `<div class="empty-box">暂无头部公司追赶数据。</div>`;
+  } else {
+    const maxFloor = Math.max(...raceRows.map((row) => row.projected_floor_count || 0), 1);
+    raceContainer.innerHTML = `<div class="chase-raceboard">${raceRows
+      .map((row) => {
+        const width = Math.max(10, (100 * (row.projected_floor_count || 0)) / maxFloor);
+        const isCutoff = cutoffCompanies.includes(row.fund_company);
+        const gapText = row.is_focus_company ? `当前基线` : `领先华夏 ${row.count_gap_vs_focus > 0 ? row.count_gap_vs_focus : 0} 只`;
+        return `
+          <article class="chase-race-row ${row.is_focus_company ? "is-focus" : ""} ${isCutoff ? "is-cutoff" : ""}">
+            <div class="chase-race-top">
+              <div>
+                <div class="chase-race-company">#${escapeHtml(row.rank)} ${escapeHtml(row.fund_company)}</div>
+                <div class="chase-race-sub">
+                  已成立 ${escapeHtml(row.establish_count)} · 在途 ${escapeHtml(row.pipeline_count)} · 募集规模 ${fmtNum(row.raise_scale_sum)} 亿元
+                </div>
+              </div>
+              <div class="chase-race-badges">
+                ${row.is_focus_company ? `<span class="chase-pill focus">华夏基线</span>` : ""}
+                ${isCutoff ? `<span class="chase-pill cutoff">前三门槛</span>` : ""}
+                <span class="chase-gap">${escapeHtml(gapText)}</span>
+              </div>
+            </div>
+            <div class="chase-race-track">
+              <div class="chase-race-fill" style="width:${width}%"></div>
+            </div>
+            <div class="chase-race-bottom">
+              <div>年底保底数 <strong>${escapeHtml(row.projected_floor_count)} 只</strong></div>
+              <div>平均申报到成立 <strong>${escapeHtml(
+                row.avg_declare_to_establish_days != null ? `${fmtNum(row.avg_declare_to_establish_days)} 天` : "—"
+              )}</strong></div>
+            </div>
+          </article>
+        `;
+      })
+      .join("")}</div>`;
+  }
+
+  const focusProducts = focus.latest_pipeline_products || [];
+  contextContainer.innerHTML = `
+    <div class="chase-context-block">
+      <div class="chase-context-title">华夏当前在途产品</div>
+      ${
+        focusProducts.length
+          ? `<div class="mini-list">${focusProducts
+              .map(
+                (item) => `
+                  <div class="mini-item clickable-row" data-product-id="${escapeHtml(item.product_id)}">
+                    <div class="mini-top">
+                      <div class="mini-name">${escapeHtml(item.fund_name)}</div>
+                      <span class="pill">${escapeHtml(item.current_stage)}</span>
+                    </div>
+                    <div class="mini-meta">${fmtDate(item.latest_event_date)} · 申报日 ${fmtDate(item.declare_date)} · ${escapeHtml(item.fof_type)}</div>
+                  </div>
+                `
+              )
+              .join("")}</div>`
+          : `<div class="empty-box">华夏当前暂无在途 FOF 产品。</div>`
+      }
+    </div>
+    <div class="chase-context-block">
+      <div class="chase-context-title">测算假设</div>
+      <div class="chase-note-list">
+        ${(dashboard.assumptions || [])
+          .map((item) => `<div class="chase-note-item">${escapeHtml(item)}</div>`)
+          .join("")}
+      </div>
+      <div class="brand-pills chase-inline-pills">
+        <span>头部前三样本 ${escapeHtml(target.benchmark_sample_count ?? 0)} 个</span>
+        <span>门槛保底数 ${escapeHtml(target.cutoff_floor_count ?? 0)} 只</span>
+        <span>华夏在途 ${escapeHtml(focus.pipeline_count ?? 0)} 只</span>
+      </div>
+    </div>
+  `;
+  bindClickableRows(contextContainer);
+
+  const tableRows = (dashboard.head_companies || []).slice().sort((a, b) => a.rank - b.rank);
+  tableContainer.innerHTML = tableRows.length
+    ? tableMarkup(
+        [
+          { label: "排名", render: (row) => escapeHtml(`#${row.rank}`) },
+          {
+            label: "基金公司",
+            render: (row) =>
+              `${escapeHtml(row.fund_company)} ${
+                row.is_focus_company ? `<span class="table-tag focus">华夏</span>` : ""
+              } ${cutoffCompanies.includes(row.fund_company) ? `<span class="table-tag cutoff">前三门槛</span>` : ""}`,
+          },
+          { label: "已成立数", render: (row) => escapeHtml(row.establish_count) },
+          { label: "在途数", render: (row) => escapeHtml(row.pipeline_count) },
+          { label: "年底保底数", render: (row) => escapeHtml(row.projected_floor_count) },
+          { label: "领先华夏(只)", render: (row) => escapeHtml(row.count_gap_vs_focus > 0 ? row.count_gap_vs_focus : 0) },
+          { label: "募集规模(亿元)", render: (row) => fmtNum(row.raise_scale_sum) },
+          {
+            label: "平均申报到成立(天)",
+            render: (row) => escapeHtml(row.avg_declare_to_establish_days != null ? fmtNum(row.avg_declare_to_establish_days) : "—"),
+          },
+          { label: "样本数", render: (row) => escapeHtml(row.duration_sample_count ?? 0) },
+        ],
+        tableRows,
+        false
+      )
+    : `<div class="empty-box">暂无头部公司明细数据。</div>`;
+}
+
 function renderDetail() {
   const container = document.getElementById("detail-content");
   const product = state.selectedProductId ? findProduct(state.selectedProductId) : state.data.products[0];
@@ -793,6 +1018,7 @@ function renderAll() {
   renderCompanyTable();
   renderKeyCompanyProgress();
   renderKeyCompanyCards();
+  renderHuaxiaChase();
   renderDetail();
 }
 

@@ -771,11 +771,202 @@ input[type="text"] {
   background: linear-gradient(90deg, #c1121f 0%, #d97706 100%);
 }
 
+.chase-kpi-grid {
+  margin-top: 0;
+}
+
+.chase-brief-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.chase-brief-main h3 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.35;
+}
+
+.chase-brief-main p {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.9;
+  font-size: 14px;
+}
+
+.chase-brief-side {
+  display: grid;
+  gap: 12px;
+}
+
+.chase-stat-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 248, 240, 0.96), rgba(255, 255, 255, 0.92));
+  border: 1px solid rgba(24, 33, 47, 0.08);
+}
+
+.chase-stat-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.chase-stat-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.chase-layout {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);
+  gap: 18px;
+}
+
+.chase-raceboard {
+  display: grid;
+  gap: 12px;
+}
+
+.chase-race-row {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(24, 33, 47, 0.07);
+}
+
+.chase-race-row.is-focus {
+  background: linear-gradient(135deg, rgba(193, 18, 31, 0.08), rgba(255, 255, 255, 0.96));
+  border-color: rgba(193, 18, 31, 0.18);
+  box-shadow: 0 16px 32px rgba(193, 18, 31, 0.08);
+}
+
+.chase-race-row.is-cutoff {
+  border-color: rgba(34, 72, 112, 0.18);
+  box-shadow: 0 12px 28px rgba(34, 72, 112, 0.06);
+}
+
+.chase-race-top,
+.chase-race-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.chase-race-company {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.chase-race-sub {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.chase-race-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.chase-pill,
+.chase-gap,
+.table-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chase-pill.focus,
+.table-tag.focus {
+  background: rgba(193, 18, 31, 0.12);
+  color: var(--red);
+}
+
+.chase-pill.cutoff,
+.table-tag.cutoff {
+  background: rgba(34, 72, 112, 0.12);
+  color: var(--blue);
+}
+
+.chase-gap {
+  background: rgba(24, 33, 47, 0.06);
+  color: var(--text);
+}
+
+.chase-race-track {
+  margin-top: 14px;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(24, 33, 47, 0.08);
+}
+
+.chase-race-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c1121f 0%, #d97706 55%, #224870 100%);
+}
+
+.chase-race-bottom {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.chase-race-bottom strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.chase-context-block + .chase-context-block {
+  margin-top: 18px;
+}
+
+.chase-context-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chase-note-list {
+  display: grid;
+  gap: 10px;
+}
+
+.chase-note-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(24, 33, 47, 0.06);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.chase-inline-pills {
+  margin-top: 14px;
+}
+
 @media (max-width: 1280px) {
   .page-grid {
     grid-template-columns: 1fr;
   }
 
+  .chase-layout,
+  .chase-brief-grid,
   .company-card-grid,
   .detail-hero,
   .overview-layout,
@@ -786,5 +977,14 @@ input[type="text"] {
   .progress-head,
   .progress-row {
     grid-template-columns: 1fr;
+  }
+
+  .chase-race-top,
+  .chase-race-bottom {
+    flex-direction: column;
+  }
+
+  .chase-race-badges {
+    justify-content: flex-start;
   }
 }
