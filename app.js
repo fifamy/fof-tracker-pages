@@ -26,6 +26,8 @@ const state = {
     keyword: "",
     keyOnly: false,
   },
+  custodianFilter: "all",
+  custodianScope: "all",
 };
 
 const STAGE_FLOW = ["新申报", "新受理", "已获批", "发行中", "已成立"];
@@ -35,6 +37,7 @@ const RAIL_NAV_ITEMS = [
   { tab: "pipeline", label: "流程跟踪", note: "在审雷达 / 跟踪总表" },
   { tab: "market", label: "公司格局", note: "对标与竞争分析" },
   { tab: "scale", label: "存量与追赶", note: "存量规模 / 追赶测算" },
+  { tab: "custodian", label: "托管行渠道", note: "托管/代销渠道画像" },
   { tab: "intel", label: "智能简报", note: "密集布局 / 软信息" },
   { tab: "detail", label: "产品详情", note: "单品穿透" },
 ];
@@ -44,6 +47,7 @@ const TAB_HEADINGS = {
   pipeline: { title: "流程跟踪", sub: "在审情报雷达 / 阶段动态 / 全量跟踪总表" },
   market: { title: "公司格局", sub: "全景大盘 / 重点公司对比 / 竞争格局" },
   scale: { title: "存量与追赶", sub: "最新规模画像 / 华夏追赶头部前三测算" },
+  custodian: { title: "托管行渠道", sub: "托管行 ≈ 主销渠道，观察头部行偏好与华夏覆盖" },
   intel: { title: "智能简报", sub: "密集布局 / 投资时钟 / 发行软信息" },
   detail: { title: "产品详情", sub: "单品推进链路与耗时诊断" },
 };
@@ -253,7 +257,7 @@ function extractHoldingBucket(name) {
   if (/(六个月|6个月|180天|半年)/.test(text)) return "6个月持有";
   if (/(一年|1年)/.test(text)) return "1年及以上";
   if (/(两年|2年|三年|3年)/.test(text)) return "1年及以上";
-  return "其他持有";
+  return "未标注持有期";
 }
 
 function extractRiskBucket(name) {
@@ -262,8 +266,8 @@ function extractRiskBucket(name) {
   if (/(积极|进取)/.test(text)) return "积极";
   if (/(平衡|均衡)/.test(text)) return "平衡";
   if (/(稳健|稳享|稳晖|稳盈|悦信稳健|安盈|安悦)/.test(text)) return "稳健";
-  if (/(多资产|多元配置|多元|配置|优选)/.test(text)) return "平衡";
-  return "平衡";
+  if (/(多资产|多元配置|多元|配置|优选)/.test(text)) return "多元配置";
+  return "未识别";
 }
 
 function deriveStrategyTags(product) {
@@ -284,7 +288,7 @@ function deriveStrategyTags(product) {
   pushTag("黄金商品", /黄金|商品|原油|大宗商品|贵金属/i);
   pushTag("REITs", /REIT|REITS|不动产投资信托/i);
   const holding = extractHoldingBucket(text);
-  if (!tags.includes(holding) && holding !== "其他持有") tags.push(holding);
+  if (!tags.includes(holding) && holding !== "未标注持有期") tags.push(holding);
   if (!tags.includes(product.fof_type)) tags.push(product.fof_type);
   return tags.slice(0, 4);
 }
@@ -455,8 +459,9 @@ function resolveMonitorStageSelection(baseRows) {
 }
 
 function getApprovalWindowInsight() {
+  const asOf = parseDate(state.data.as_of_date);
   const approvalRows = state.data.products
-    .filter((item) => item.approval_date)
+    .filter((item) => item.approval_date && (!asOf || parseDate(item.approval_date) <= asOf))
     .slice()
     .sort((a, b) => String(a.approval_date || "").localeCompare(String(b.approval_date || "")));
   const dates = [...new Set(approvalRows.map((item) => item.approval_date))];
@@ -480,6 +485,7 @@ function getApprovalWindowInsight() {
     lastDate,
     predictedDate,
     dueProducts,
+    sampleCount: intervals.length,
   };
 }
 
@@ -587,11 +593,20 @@ function getPeerProducts(product, limit = 3) {
     .slice(0, limit);
 }
 
+const _benchmarkCache = new Map();
+
+function clearInsightCache() {
+  _benchmarkCache.clear();
+}
+
 function getHuaxiaBenchmarkInsight(product) {
+  const id = product?.product_id;
+  if (id && _benchmarkCache.has(id)) return _benchmarkCache.get(id);
+  let result;
   const matches = getHuaxiaBenchmarks(product, 1);
   if (product.fund_company === "华夏") {
     const peers = getPeerProducts(product, 2);
-    return {
+    result = {
       tone: "focus",
       label: "华夏主动作",
       headline: peers.length ? `外部相似竞品 ${peers.length} 只` : "当前仍是先手卡位",
@@ -599,27 +614,29 @@ function getHuaxiaBenchmarkInsight(product) {
         ? `${peers.map((item) => item.fund_company).join("、")}存在同类布局，可持续观察发行窗口。`
         : "外部相似产品不多，可关注后续同档期申报动作。",
     };
-  }
-  if (!matches.length) {
-    return {
+  } else if (!matches.length) {
+    result = {
       tone: "alert",
       label: "空白预警",
       headline: "华夏暂无同类产品",
       detail: "该格子暂无华夏对标储备，建议纳入重点盯防。",
     };
+  } else {
+    const match = matches[0];
+    const metric =
+      match.raise_scale != null
+        ? `已募集 ${fmtNum(match.raise_scale)} 亿元`
+        : `${escapeHtml(match.current_stage)} · 最新日期 ${fmtDate(match.latest_event_date)}`;
+    result = {
+      tone: "match",
+      label: "内部对标",
+      headline: `华夏已有对标产品：${match.fund_name}`,
+      detail: metric,
+      product: match,
+    };
   }
-  const match = matches[0];
-  const metric =
-    match.raise_scale != null
-      ? `已募集 ${fmtNum(match.raise_scale)} 亿元`
-      : `${escapeHtml(match.current_stage)} · 最新日期 ${fmtDate(match.latest_event_date)}`;
-  return {
-    tone: "match",
-    label: "内部对标",
-    headline: `华夏已有对标产品：${match.fund_name}`,
-    detail: metric,
-    product: match,
-  };
+  if (id) _benchmarkCache.set(id, result);
+  return result;
 }
 
 function getThreatBadge(product) {
@@ -706,19 +723,18 @@ function buildStepTrackerMarkup(product, mode = false) {
 
 function getMatrixBuckets() {
   return {
-    holding: ["3个月持有", "6个月持有", "1年及以上", "其他持有"],
-    risk: ["养老", "稳健", "平衡", "积极"],
+    holding: ["3个月持有", "6个月持有", "1年及以上", "未标注持有期"],
+    risk: ["养老", "稳健", "平衡", "多元配置", "积极", "未识别"],
   };
 }
 
 function groupByMatrix(products) {
   const buckets = {};
+  const { holding: holdingBuckets, risk: riskBuckets } = getMatrixBuckets();
   products.forEach((product) => {
     const profile = getProductProfile(product);
-    const holding = ["3个月持有", "6个月持有", "1年及以上", "其他持有"].includes(profile.holdingBucket)
-      ? profile.holdingBucket
-      : "其他持有";
-    const risk = ["养老", "稳健", "平衡", "积极"].includes(profile.riskBucket) ? profile.riskBucket : "平衡";
+    const holding = holdingBuckets.includes(profile.holdingBucket) ? profile.holdingBucket : "未标注持有期";
+    const risk = riskBuckets.includes(profile.riskBucket) ? profile.riskBucket : "未识别";
     const key = `${risk}|${holding}`;
     if (!buckets[key]) buckets[key] = [];
     buckets[key].push(product);
@@ -763,9 +779,9 @@ function getRadarScores(product) {
       ? 55
       : profile.holdingBucket === "6个月持有"
         ? 72
-        : profile.holdingBucket === "其他持有"
-          ? 64
-          : 84;
+        : profile.holdingBucket === "1年及以上"
+          ? 84
+          : 64;
   const etf = /ETF-FOF/i.test(product.fund_name) ? 88 : 36;
   const gap = hasGap ? 86 : product.fund_company === "华夏" ? 48 : 58;
   return [
@@ -880,7 +896,9 @@ function setSelectedProduct(productId, switchTab = false, revealDrawer = true) {
 
 function activateTabs() {
   document.querySelectorAll(".tab").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.tab === state.activeTab);
+    const isActive = button.dataset.tab === state.activeTab;
+    button.classList.toggle("is-active", isActive);
+    if (button.hasAttribute("aria-selected")) button.setAttribute("aria-selected", isActive ? "true" : "false");
   });
   document.querySelectorAll(".rail-nav-button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tab === state.activeTab);
@@ -893,6 +911,21 @@ function activateTabs() {
   const s = document.getElementById("topbar-subheading");
   if (heading && h) h.textContent = heading.title;
   if (heading && s) s.textContent = heading.sub || "";
+  renderTopbarStamp();
+}
+
+function renderTopbarStamp() {
+  const stamp = document.getElementById("topbar-stamp");
+  if (!stamp || !state.data) return;
+  const asOf = state.data.as_of_date || "—";
+  const generated = state.data.generated_at || "—";
+  const profile = getStockScaleProfile();
+  const stockDate = profile?.scale_as_of_date || null;
+  stamp.innerHTML = `
+    <span class="stamp-pill" title="数据截止日">截止 ${escapeHtml(asOf)}</span>
+    <span class="stamp-pill subtle" title="snapshot 生成时间">生成 ${escapeHtml(generated)}</span>
+    ${stockDate ? `<span class="stamp-pill subtle" title="存量规模口径来自基金画像季报">存量口径 ${escapeHtml(stockDate)}</span>` : ""}
+  `;
 }
 
 function tableMarkup(columns, rows, clickable = false) {
@@ -940,8 +973,8 @@ function renderHero() {
     `跟踪产品 ${state.data.products.length} 只`,
     `${prefix}新申报 ${topSignals} 只`,
     `华夏在途 ${huaxiaPipeline} 只`,
-    density.alert_count != null ? `密集赛道提醒 ${density.alert_count} 个` : null,
-    future.events ? `未来30天预测 ${future.events.length} 个` : null,
+    density.alert_count > 0 ? `密集赛道提醒 ${density.alert_count} 个` : null,
+    future.events && future.events.length > 0 ? `未来30天预测 ${future.events.length} 个` : null,
     stockProfile ? `存量FOF ${stockProfile.product_count} 只` : null,
     stockProfile ? `存量规模 ${fmtNum(stockProfile.total_latest_scale)} 亿元` : null,
     huaxiaStock ? `华夏存量 #${huaxiaStock.rank} · ${fmtNum(huaxiaStock.latest_scale_sum)} 亿元` : null,
@@ -974,9 +1007,10 @@ function renderKPIs() {
   const gapCount = gapProducts.length;
   const huaxiaYtd = (state.data.summary.company_rankings.all.ytd || []).find((item) => item.fund_company === "华夏") || {};
   const weekly = (state.data.summary.trends && state.data.summary.trends.weekly_establish) || [];
-  const scaleDelta = computeWoWDelta(weekly.map((r) => Number(r.raise_scale) || 0));
-  const countDelta = computeWoWDelta(weekly.map((r) => Number(r.establish_count) || 0));
-  const sparkline = buildSparklineSvg(weekly.map((r) => Number(r.raise_scale) || 0));
+  const fullWeeks = weekly.filter((row) => !row.is_partial_week);
+  const scaleDelta = computeWoWDelta(fullWeeks.map((r) => Number(r.raise_scale) || 0));
+  const countDelta = computeWoWDelta(fullWeeks.map((r) => Number(r.establish_count) || 0));
+  const sparkline = buildSparklineSvg(fullWeeks.map((r) => Number(r.raise_scale) || 0));
   const slicePrefix = sliceIsActive() ? "切片 · " : "";
   const items = [
     { key: "declare", icon: "申", label: `${slicePrefix}${titlePrefix}新申报`, value: kpi.declare_count ?? 0, note: "按材料接收日 · 点击下钻" },
@@ -988,7 +1022,13 @@ function renderKPIs() {
       icon: "募",
       label: `${slicePrefix}${titlePrefix}募集规模`,
       value: fmtNum(kpi.raise_scale),
-      note: sliceIsActive() ? "单位：亿元 · 点击查看明细" : "亿元 · 近8周走势 · 点击下钻",
+      note: (() => {
+        const missing = kpi.raise_scale_missing_count;
+        const sample = kpi.raise_scale_sample_count;
+        const baseHint = sliceIsActive() ? "亿元(估)·点击下钻" : "亿元(估)·近8周走势·点击下钻";
+        if (missing && sample != null) return `${baseHint} · 募集口径覆盖 ${sample}/${sample + missing}`;
+        return baseHint;
+      })(),
       delta: sliceIsActive() ? null : scaleDelta,
       spark: sliceIsActive() ? "" : sparkline,
     },
@@ -1238,16 +1278,17 @@ function renderWatchFeed() {
 function buildForecastAxisMarkup(events) {
   const valid = (events || []).filter((e) => e && e.predicted_date);
   if (!valid.length) return "";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = today.getTime();
+  const baseDate = parseDate(state.data.as_of_date) || new Date();
+  baseDate.setHours(0, 0, 0, 0);
+  const start = baseDate.getTime();
   const end = start + 30 * 86400000;
   const dayMs = 86400000;
   const toPct = (d) => {
     const t = parseDate(d)?.getTime();
-    if (!t) return null;
-    const clamped = Math.max(start, Math.min(end, t));
-    return ((clamped - start) / (end - start)) * 100;
+    if (t == null) return null;
+    if (t < start) return -1;
+    if (t > end) return 101;
+    return ((t - start) / (end - start)) * 100;
   };
   const ticks = [];
   for (let i = 0; i <= 30; i += 5) {
@@ -1257,7 +1298,11 @@ function buildForecastAxisMarkup(events) {
     ticks.push({
       pct,
       major: isMajor,
-      label: isMajor ? `${String(dt.getMonth() + 1).padStart(2, "0")}/${String(dt.getDate()).padStart(2, "0")}` : "",
+      label: isMajor
+        ? (i === 0
+            ? `截至 ${String(dt.getMonth() + 1).padStart(2, "0")}/${String(dt.getDate()).padStart(2, "0")}`
+            : `${String(dt.getMonth() + 1).padStart(2, "0")}/${String(dt.getDate()).padStart(2, "0")}`)
+        : "",
     });
   }
   const tickMarkup = ticks
@@ -1284,10 +1329,19 @@ function buildForecastAxisMarkup(events) {
           const conf = e.confidence === "high" ? "conf-high" : e.confidence === "medium" ? "conf-medium" : "conf-low";
           const watched = isWatchedCompany(e.fund_company) ? " is-watched" : "";
           const huaxiaClass = lane.huaxia ? " is-huaxia" : "";
-          const tooltip = `${e.fund_company} · ${e.fund_name}\n预计 ${fmtDate(e.predicted_date)} · ${e.predicted_stage_label}`;
-          return `<button type="button" class="gantt-node ${conf}${watched}${huaxiaClass} clickable-row" data-product-id="${escapeHtml(
+          let extraClass = "";
+          let placement = pct;
+          if (pct < 0) {
+            extraClass = " is-overdue";
+            placement = 0;
+          } else if (pct > 100) {
+            extraClass = " is-beyond";
+            placement = 100;
+          }
+          const tooltip = `${e.fund_company} · ${e.fund_name}\n预计 ${fmtDate(e.predicted_date)} · ${e.predicted_stage_label}${pct < 0 ? "（已超期）" : pct > 100 ? "（30天以外）" : ""}`;
+          return `<button type="button" class="gantt-node ${conf}${watched}${huaxiaClass}${extraClass} clickable-row" data-product-id="${escapeHtml(
             e.product_id
-          )}" style="left:${pct.toFixed(2)}%" title="${escapeHtml(tooltip)}" aria-label="${escapeHtml(tooltip)}"></button>`;
+          )}" style="left:${placement.toFixed(2)}%" title="${escapeHtml(tooltip)}" aria-label="${escapeHtml(tooltip)}"></button>`;
         })
         .join("");
       return `
@@ -1502,6 +1556,306 @@ function renderMacroClock() {
   bindClickableRows(container);
 }
 
+const CUSTODIAN_FILTERS = [
+  { key: "all", label: "全部" },
+  { key: "bank", label: "银行" },
+  { key: "broker", label: "券商 / 其他" },
+  { key: "huaxia", label: "华夏已合作" },
+  { key: "huaxia_gap", label: "华夏未触达" },
+];
+
+function renderCustodianBoard() {
+  const kpiEl = document.getElementById("custodian-kpi-grid");
+  const summaryEl = document.getElementById("custodian-summary");
+  const boardEl = document.getElementById("custodian-board");
+  const tableEl = document.getElementById("custodian-table");
+  const tabsEl = document.getElementById("custodian-filter-tabs");
+  const scopeToggle = document.getElementById("custodian-scope-toggle");
+  const scopeHint = document.getElementById("custodian-scope-hint");
+  if (!summaryEl || !boardEl) return;
+  const landscape = state.data.summary.custodian_landscape || {};
+  const scopes = landscape.scopes || {};
+  const scopeKey = scopes[state.custodianScope] ? state.custodianScope : "all";
+  state.custodianScope = scopeKey;
+  const scope = scopes[scopeKey] || { rows: [], total_with_custodian: 0, row_count: 0, label: "" };
+  const allRows = scope.rows || [];
+
+  if (scopeToggle) {
+    scopeToggle.querySelectorAll("[data-custodian-scope]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.custodianScope === scopeKey);
+    });
+    if (!scopeToggle.dataset.bound) {
+      scopeToggle.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-custodian-scope]");
+        if (!btn) return;
+        state.custodianScope = btn.dataset.custodianScope;
+        renderCustodianBoard();
+      });
+      scopeToggle.dataset.bound = "1";
+    }
+  }
+  if (scopeHint) {
+    scopeHint.innerHTML = scopeKey === "ytd_new"
+      ? `今年新发：仅看 ${escapeHtml(state.data.as_of_date)} 之前今年成立 / 在审的 FOF（活跃流水），用于看本年度渠道选择。`
+      : `全部基金：含 ${escapeHtml(landscape.active_universe_count ?? 0)} 只今年活跃产品 + ${escapeHtml(landscape.stock_only_count ?? 0)} 只仅在画像表中的存量产品（按基金名称去重）。`;
+  }
+
+  if (kpiEl) {
+    const totalProducts = allRows.reduce((sum, r) => sum + (r.product_count || 0), 0);
+    const inReviewTotal = allRows.reduce((sum, r) => sum + (r.in_review_count || 0), 0);
+    const establishedTotal = allRows.reduce((sum, r) => sum + (r.established_count || 0), 0);
+    const scaleTotal = allRows.reduce((sum, r) => sum + (Number(r.raise_scale_sum) || 0), 0);
+    const huaxiaCovered = allRows.filter((r) => (r.focus_count || 0) > 0).length;
+    const huaxiaProducts = allRows.reduce((sum, r) => sum + (r.focus_count || 0), 0);
+    const banks = allRows.filter((r) => r.kind === "银行").length;
+    const others = allRows.length - banks;
+    const top = allRows[0];
+    const scopeLabel = scope.label || (scopeKey === "ytd_new" ? "今年新发" : "全部基金");
+    const kpiItems = [
+      {
+        label: `已披露托管行 FOF（${scopeLabel}）`,
+        value: `${scope.total_with_custodian ?? 0}`,
+        note: scopeKey === "all"
+          ? `今年活跃 ${landscape.active_universe_count ?? 0} + 仅画像 ${landscape.stock_only_count ?? 0}`
+          : "今年成立 / 在审，未披露托管行的多为申报阶段",
+      },
+      {
+        label: "覆盖托管机构",
+        value: `${scope.row_count ?? 0}`,
+        note: `银行 ${banks} 家 · 券商/其他 ${others} 家`,
+      },
+      {
+        label: "在审 / 已成立",
+        value: `${inReviewTotal} / ${establishedTotal}`,
+        note: `合计 ${totalProducts} 只`,
+      },
+      {
+        label: "累计募集 / 存量规模",
+        value: `${fmtNum(scaleTotal)} 亿`,
+        note: scopeKey === "all" ? "募集口径 + 画像最新规模合计" : "仅含已披露募集规模的成立产品",
+      },
+      {
+        label: "华夏合作行",
+        value: `${huaxiaCovered}`,
+        note: `产品 ${huaxiaProducts} 只 · 占可披露口径 ${scope.row_count ? fmtNum((huaxiaCovered / scope.row_count) * 100, 0) : 0}%`,
+      },
+      {
+        label: top ? `头部托管：${top.custodian}` : "头部托管",
+        value: top ? `${top.product_count} 只` : "—",
+        note: top ? `在审 ${top.in_review_count} · 已成立 ${top.established_count} · 合作 ${top.company_count} 家` : "暂无数据",
+      },
+    ];
+    kpiEl.innerHTML = kpiItems
+      .map(
+        (item) => `
+          <article class="kpi-card chase-kpi-card">
+            <div class="kpi-label">${escapeHtml(item.label)}</div>
+            <div class="kpi-value">${escapeHtml(item.value)}</div>
+            <div class="kpi-note">${escapeHtml(item.note)}</div>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  if (tabsEl) {
+    tabsEl.innerHTML = CUSTODIAN_FILTERS.map(
+      (item) =>
+        `<button class="subtab ${state.custodianFilter === item.key ? "is-active" : ""}" type="button" data-custodian-filter="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>`
+    ).join("");
+    tabsEl.querySelectorAll("[data-custodian-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.custodianFilter = btn.dataset.custodianFilter;
+        renderCustodianBoard();
+      });
+    });
+  }
+
+  if (!allRows.length) {
+    summaryEl.innerHTML = `<div class="watch-summary">${escapeHtml(scope.headline || landscape.headline || "当前口径下没有可用的托管行数据。")}</div>`;
+    boardEl.innerHTML = `<div class="empty-box">${escapeHtml(
+      landscape.notes && landscape.notes[0] ? landscape.notes[0] : "托管行通常在产品进入发行阶段后才披露，因此早期数据为空属正常。"
+    )}</div>`;
+    if (tableEl) tableEl.innerHTML = `<div class="empty-box">暂无渠道总表数据。</div>`;
+    return;
+  }
+
+  const filterFn = (row) => {
+    const f = state.custodianFilter;
+    if (f === "bank") return row.kind === "银行";
+    if (f === "broker") return row.kind !== "银行";
+    if (f === "huaxia") return (row.focus_count || 0) > 0;
+    if (f === "huaxia_gap") return (row.focus_count || 0) === 0;
+    return true;
+  };
+  const rows = allRows.filter(filterFn);
+  const totalProducts = allRows.reduce((sum, r) => sum + (r.product_count || 0), 0);
+  const huaxiaCovered = allRows.filter((r) => (r.focus_count || 0) > 0).length;
+  const inReviewTotal = allRows.reduce((sum, r) => sum + (r.in_review_count || 0), 0);
+  const scaleTotal = allRows.reduce((sum, r) => sum + (Number(r.raise_scale_sum) || 0), 0);
+
+  summaryEl.innerHTML = `
+    <div class="monitor-summary">
+      <div class="monitor-stat">
+        <span>当前口径</span>
+        <strong>${escapeHtml(scope.label || (scopeKey === "ytd_new" ? "今年新发" : "全部基金"))}</strong>
+        <em>${escapeHtml(scope.headline || "")}</em>
+      </div>
+      <div class="monitor-stat">
+        <span>覆盖托管机构</span>
+        <strong>${escapeHtml(scope.row_count ?? 0)} 家</strong>
+        <em>当前筛选命中 ${escapeHtml(rows.length)} 家</em>
+      </div>
+      <div class="monitor-stat">
+        <span>合计在审 FOF</span>
+        <strong>${escapeHtml(inReviewTotal)} 只</strong>
+        <em>注：含申报、受理、获批、发行中</em>
+      </div>
+      <div class="monitor-stat">
+        <span>累计募集 / 存量规模</span>
+        <strong>${fmtNum(scaleTotal)} 亿</strong>
+        <em>${scopeKey === "all" ? "募集口径 + 画像最新规模合计" : "仅含已披露募集规模的成立产品"}</em>
+      </div>
+      <div class="monitor-stat">
+        <span>华夏合作行</span>
+        <strong>${escapeHtml(huaxiaCovered)} 家</strong>
+        <em>占可披露口径 ${scope.row_count ? fmtNum((huaxiaCovered / scope.row_count) * 100, 0) : 0}%</em>
+      </div>
+    </div>
+  `;
+
+  if (tableEl) {
+    if (!allRows.length) {
+      tableEl.innerHTML = `<div class="empty-box">暂无可展示的渠道总表数据。</div>`;
+    } else {
+      tableEl.innerHTML = tableMarkup(
+        [
+          { label: "托管行", key: "custodian" },
+          { label: "类型", render: (row) => escapeHtml(row.kind) },
+          { label: "FOF 总数", render: (row) => escapeHtml(row.product_count) },
+          { label: "在审", render: (row) => escapeHtml(row.in_review_count) },
+          { label: "已成立", render: (row) => escapeHtml(row.established_count) },
+          { label: "待发行", render: (row) => escapeHtml(row.ready_to_issue_count) },
+          { label: "合作公司", render: (row) => escapeHtml(row.company_count) },
+          {
+            label: "募集规模(亿元)",
+            render: (row) => `${fmtNum(row.raise_scale_sum)}（${row.raise_scale_sample_count}/${row.established_count}）`,
+          },
+          { label: "平均单只(亿元)", render: (row) => fmtNum(row.avg_raise_scale) },
+          {
+            label: `近${landscape.recent_window_days || 30}天动作`,
+            render: (row) => escapeHtml(row.recent_action_count),
+          },
+          {
+            label: "华夏覆盖",
+            render: (row) =>
+              row.focus_count
+                ? `<span class="table-tag focus">${escapeHtml(row.focus_count)}${row.focus_in_review_count ? ` · 在途 ${escapeHtml(row.focus_in_review_count)}` : ""}</span>`
+                : "—",
+          },
+          { label: "最近动作", render: (row) => fmtDate(row.latest_event_date) },
+          {
+            label: "合作 TOP",
+            render: (row) =>
+              (row.top_companies || [])
+                .slice(0, 3)
+                .map((c) => `${escapeHtml(c.fund_company)}·${c.count}`)
+                .join("、") || "—",
+          },
+        ],
+        allRows,
+        false
+      );
+    }
+  }
+
+  if (!rows.length) {
+    boardEl.innerHTML = `<div class="empty-box">当前筛选条件下没有命中的托管行。</div>`;
+    return;
+  }
+
+  const maxProducts = Math.max(...rows.map((r) => r.product_count || 0), 1);
+  boardEl.innerHTML = `
+    <div class="custodian-board">
+      ${rows
+        .map((row) => {
+          const widthPct = Math.max(8, ((row.product_count || 0) / maxProducts) * 100);
+          const focusBadge = (row.focus_count || 0) > 0
+            ? `<span class="custodian-pill is-focus">华夏已合作 ${row.focus_count}${row.focus_in_review_count ? ` · 在途 ${row.focus_in_review_count}` : ""}</span>`
+            : `<span class="custodian-pill is-gap">华夏未触达</span>`;
+          const keyChips = (row.key_companies || [])
+            .map((c) => `<span class="custodian-key-chip">${escapeHtml(c)}</span>`)
+            .join("");
+          const topCompanies = (row.top_companies || [])
+            .map((c) => `${escapeHtml(c.fund_company)}·${c.count}`)
+            .join("、");
+          const recent = (row.recent_products || [])
+            .slice(0, 3)
+            .map(
+              (p) => `
+                <div class="mini-item clickable-row" data-product-id="${escapeHtml(p.product_id)}">
+                  <div class="mini-top">
+                    <div class="mini-name">${escapeHtml(p.fund_name)}</div>
+                    <span class="pill">${escapeHtml(p.current_stage || "—")}</span>
+                  </div>
+                  <div class="mini-meta">${escapeHtml(p.fund_company)} · ${escapeHtml(p.fof_type || "—")} · 最新 ${fmtDate(p.latest_event_date)}${
+                    p.raise_scale != null ? ` · 募集 ${fmtNum(p.raise_scale)} 亿` : ""
+                  }</div>
+                </div>
+              `
+            )
+            .join("");
+          const scaleNote = row.raise_scale_sample_count
+            ? `成立募集 ${fmtNum(row.raise_scale_sum)} 亿（${row.raise_scale_sample_count}/${row.established_count} 已披露）`
+            : `成立 ${row.established_count} 只 · 募集口径未披露`;
+          return `
+            <article class="custodian-card ${(row.focus_count || 0) > 0 ? "has-focus" : ""}">
+              <div class="custodian-head">
+                <div>
+                  <div class="custodian-name">${escapeHtml(row.custodian)}</div>
+                  <div class="custodian-meta">
+                    ${escapeHtml(row.kind)} · 合作公司 ${escapeHtml(row.company_count)} 家 · 最近动作 ${fmtDate(row.latest_event_date)}
+                  </div>
+                </div>
+                ${focusBadge}
+              </div>
+              <div class="custodian-bar">
+                <div class="custodian-bar-fill" style="width:${widthPct.toFixed(1)}%"></div>
+                <span class="custodian-bar-meta">FOF 总数 ${escapeHtml(row.product_count)} · 在审 ${escapeHtml(row.in_review_count)} · 已成立 ${escapeHtml(row.established_count)}</span>
+              </div>
+              <div class="custodian-stats">
+                <div><span>待发行</span><strong>${escapeHtml(row.ready_to_issue_count)} 只</strong></div>
+                <div><span>近 ${escapeHtml(landscape.recent_window_days || 30)} 天动作</span><strong>${escapeHtml(row.recent_action_count)} 只</strong></div>
+                <div><span>规模合计</span><strong>${fmtNum(row.raise_scale_sum)} 亿</strong></div>
+                <div><span>平均单只</span><strong>${row.avg_raise_scale != null ? `${fmtNum(row.avg_raise_scale)} 亿` : "—"}</strong></div>
+              </div>
+              <div class="custodian-meta-row">
+                <span>${escapeHtml(scaleNote)}</span>
+              </div>
+              ${
+                keyChips
+                  ? `<div class="custodian-keys"><span class="custodian-keys-label">重点公司：</span>${keyChips}</div>`
+                  : ""
+              }
+              ${
+                topCompanies
+                  ? `<div class="custodian-meta-row"><span>合作 TOP：${escapeHtml(topCompanies)}</span></div>`
+                  : ""
+              }
+              ${
+                recent
+                  ? `<div class="custodian-recent"><div class="custodian-recent-title">近期动态</div><div class="mini-list">${recent}</div></div>`
+                  : ""
+              }
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+  bindClickableRows(boardEl);
+}
+
 function renderSoftIntelBoard() {
   const container = document.getElementById("soft-intel-board");
   if (!container) return;
@@ -1623,6 +1977,25 @@ function renderPipeline() {
   document.getElementById("pipeline-grid").innerHTML = html;
 }
 
+function scrollToTop() {
+  const supportsSmooth = "scrollBehavior" in document.documentElement.style;
+  const opts = supportsSmooth ? { top: 0, left: 0, behavior: "smooth" } : { top: 0, left: 0 };
+  window.scrollTo(opts);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  const main = document.querySelector(".main");
+  if (main) main.scrollTop = 0;
+}
+
+function switchTab(nextTab) {
+  if (!nextTab) return;
+  const changed = state.activeTab !== nextTab;
+  state.activeTab = nextTab;
+  activateTabs();
+  if (state.activeTab === "detail") renderDetail();
+  if (changed) scrollToTop();
+}
+
 function renderRailNav() {
   const container = document.getElementById("rail-nav");
   if (!container) return;
@@ -1636,9 +2009,7 @@ function renderRailNav() {
   ).join("");
   container.querySelectorAll(".rail-nav-button").forEach((button) => {
     button.addEventListener("click", () => {
-      state.activeTab = button.dataset.tab;
-      activateTabs();
-      if (state.activeTab === "detail") renderDetail();
+      switchTab(button.dataset.tab);
     });
   });
 }
@@ -2015,71 +2386,70 @@ function renderMatrixBattlefield() {
 }
 
 function renderEfficiencyBattlefield() {
-  const companies = getTopComparisonCompanies(6).map((item) => item.fund_company);
-  const rows = companies
-    .map((company) => {
-      const products = state.data.products.filter((item) => item.fund_company === company);
-      const avgDeclareToAccept = average(products.map((item) => item.declare_to_accept_days));
-      const avgAcceptToApproval = average(products.map((item) => item.accept_to_approval_days));
-      const avgDeclareToEstablish = average(products.map((item) => daysBetween(item.declare_date, item.establish_date)));
-      const longestAccepting = products
-        .filter((item) => item.current_stage === "新受理" && item.days_in_stage != null)
-        .sort((a, b) => (Number(b.days_in_stage) || 0) - (Number(a.days_in_stage) || 0))[0];
-      return {
-        fund_company: company,
-        avgDeclareToAccept,
-        avgAcceptToApproval,
-        avgDeclareToEstablish,
-        warning:
-          longestAccepting && avgAcceptToApproval != null && Number(longestAccepting.days_in_stage) > avgAcceptToApproval
-            ? `${longestAccepting.fund_name} 在“受理”阶段已停留 ${longestAccepting.days_in_stage} 天，超过同公司平均获批等待。`
-            : "",
-      };
+  const efficiency = state.data.summary.efficiency_diagnosis || {};
+  const stageRows = (efficiency.stage_rows || []).filter((r) => r.watch_stage);
+  const overallRow = (efficiency.stage_rows || []).find((r) => r.metric_key === "declare_to_establish_days");
+  const benchmarkCompanies = efficiency.benchmark_companies || [];
+  if (!stageRows.length && !overallRow) {
+    return `<div class="empty-box">当前样本不足，暂未形成审批效能对比。</div>`;
+  }
+  const summaryHead = efficiency.focus_summary || "当前数据不足以形成结论。";
+  const focusBottleneck = efficiency.focus_bottleneck;
+  const stageMarkup = stageRows
+    .map((row) => {
+      const focusLabel = row.focus_avg_days != null ? `${fmtNum(row.focus_avg_days)} 天` : "样本不足";
+      const benchLabel = row.benchmark_avg_days != null ? `${fmtNum(row.benchmark_avg_days)} 天` : "样本不足";
+      const gapLabel = row.gap_days != null ? `${row.gap_days > 0 ? "+" : ""}${fmtNum(row.gap_days)} 天` : "—";
+      const tone = row.gap_days == null
+        ? "muted"
+        : row.gap_days > 5
+          ? "slow"
+          : row.gap_days < -5
+            ? "fast"
+            : "even";
+      return `
+        <article class="efficiency-row tone-${tone} ${focusBottleneck && focusBottleneck.metric_key === row.metric_key ? "is-bottleneck" : ""}">
+          <div class="efficiency-company">
+            <strong>${escapeHtml(row.stage_label)}</strong>
+            <span class="battle-chip">${escapeHtml(row.assessment)}</span>
+          </div>
+          <div class="efficiency-metric">
+            <span>华夏均值</span>
+            <strong>${escapeHtml(focusLabel)}</strong>
+            <em>样本 ${escapeHtml(row.focus_sample_count ?? 0)} 条</em>
+          </div>
+          <div class="efficiency-metric">
+            <span>重点同业均值</span>
+            <strong>${escapeHtml(benchLabel)}</strong>
+            <em>样本 ${escapeHtml(row.benchmark_sample_count ?? 0)} 条</em>
+          </div>
+          <div class="efficiency-metric">
+            <span>差值</span>
+            <strong>${escapeHtml(gapLabel)}</strong>
+          </div>
+        </article>
+      `;
     })
-    .sort((a, b) => {
-      const aValue = a.avgDeclareToEstablish == null ? Infinity : a.avgDeclareToEstablish;
-      const bValue = b.avgDeclareToEstablish == null ? Infinity : b.avgDeclareToEstablish;
-      return aValue - bValue;
-    });
-  const benchmark = average(rows.filter((item) => item.fund_company !== "华夏").map((item) => item.avgDeclareToEstablish));
-  const huaxia = rows.find((item) => item.fund_company === "华夏");
+    .join("");
+  const overallLine = overallRow
+    ? `<div class="battlefield-caption">申报→成立全链路：华夏 ${
+        overallRow.focus_avg_days != null ? `${fmtNum(overallRow.focus_avg_days)} 天（样本 ${overallRow.focus_sample_count}）` : "样本不足"
+      } · 重点同业 ${
+        overallRow.benchmark_avg_days != null
+          ? `${fmtNum(overallRow.benchmark_avg_days)} 天（样本 ${overallRow.benchmark_sample_count}）`
+          : "样本不足"
+      }${overallRow.gap_days != null ? ` · 差值 ${overallRow.gap_days > 0 ? "+" : ""}${fmtNum(overallRow.gap_days)} 天` : ""}。</div>`
+    : "";
   return `
     <div class="battlefield-summary">
-      <div class="battlefield-headline"><strong>审批效率追踪</strong> 把申报到受理、受理到获批、申报到成立三个耗时拆开，看华夏是否慢于头部同业。</div>
-      <div class="battlefield-caption">${
-        huaxia && benchmark != null
-          ? `头部同业平均“申报到成立”约 ${fmtNum(benchmark)} 天，华夏当前可比口径为 ${
-              huaxia.avgDeclareToEstablish != null ? `${fmtNum(huaxia.avgDeclareToEstablish)} 天` : "样本不足"
-            }。`
-          : "当前仅展示已有样本的公司，空值代表样本不足。"
+      <div class="battlefield-headline"><strong>审批效率追踪</strong> 按"申报→受理→获批→发行"四段拆，对比华夏与重点同业平均耗时。</div>
+      <div class="battlefield-caption">${escapeHtml(summaryHead)}${
+        benchmarkCompanies.length ? ` · benchmark 公司：${escapeHtml(benchmarkCompanies.join("、"))}` : ""
       }</div>
+      ${overallLine}
     </div>
     <div class="efficiency-list">
-      ${rows
-        .map(
-          (row) => `
-            <article class="efficiency-row ${row.fund_company === "华夏" ? "is-huaxia" : ""} ${row.warning ? "is-warning" : ""}">
-              <div class="efficiency-company">
-                <strong>${escapeHtml(row.fund_company)}</strong>
-                ${row.fund_company === "华夏" ? `<span class="battle-chip">华夏视角</span>` : ""}
-              </div>
-              <div class="efficiency-metric">
-                <span>申报 -> 受理</span>
-                <strong>${row.avgDeclareToAccept != null ? `${fmtNum(row.avgDeclareToAccept)} 天` : "—"}</strong>
-              </div>
-              <div class="efficiency-metric">
-                <span>受理 -> 获批</span>
-                <strong>${row.avgAcceptToApproval != null ? `${fmtNum(row.avgAcceptToApproval)} 天` : "—"}</strong>
-              </div>
-              <div class="efficiency-metric">
-                <span>申报 -> 成立</span>
-                <strong>${row.avgDeclareToEstablish != null ? `${fmtNum(row.avgDeclareToEstablish)} 天` : "—"}</strong>
-              </div>
-              <div class="efficiency-note">${escapeHtml(row.warning || "当前没有触发明显的受理停留预警。")}</div>
-            </article>
-          `
-        )
-        .join("")}
+      ${stageMarkup}
     </div>
   `;
 }
@@ -2307,10 +2677,14 @@ function renderTrendChart() {
   rows.forEach((row, i) => {
     const barY = yCount(row.establish_count);
     const barH = margin.top + chartH - barY;
-    svg += `<rect x="${x(i)}" y="${barY}" width="${barW}" height="${barH}" rx="14" fill="#224870" opacity="0.84" />`;
+    const partial = row.is_partial_week;
+    svg += `<rect x="${x(i)}" y="${barY}" width="${barW}" height="${barH}" rx="14" fill="#224870" opacity="${partial ? 0.32 : 0.84}"${partial ? ' stroke="#224870" stroke-dasharray="4 3" stroke-width="1.4"' : ""} />`;
     if (row.establish_count > 0) {
       svg += `<rect x="${x(i) + barW / 2 - 14}" y="${barY - 24}" width="28" height="18" rx="9" fill="#eef4fb" />`;
       svg += `<text x="${x(i) + barW / 2}" y="${barY - 11}" text-anchor="middle" font-size="11" font-weight="700" fill="#224870">${row.establish_count}</text>`;
+    }
+    if (partial) {
+      svg += `<text x="${x(i) + barW / 2}" y="${margin.top + chartH + 18}" text-anchor="middle" font-size="10" fill="#9b6e1f">当前周·未完整</text>`;
     }
     const labelParts = wrapLabel(row.label);
     svg += `<text x="${margin.left + i * band + band / 2}" y="${height - 24}" text-anchor="middle" font-size="10.5" fill="#667085">`;
@@ -2415,21 +2789,24 @@ function renderKeyProducts() {
       }
     </div>
   `);
+  const huaxiaInReviewCount = huaxiaAll.filter(isInReviewProduct).length;
+  const huaxiaPreview = huaxiaAll.slice(0, 5);
+  const huaxiaCollapsed = huaxiaAll.slice(5);
   parts.push(`
-    <div class="key-product-group is-huaxia">
-      <div class="key-product-group-head">
-        <span class="key-product-group-title">华夏全量 FOF</span>
-        <span class="key-product-group-count">${huaxiaAll.length} 只</span>
-      </div>
+    <details class="key-product-group is-huaxia huaxia-summary">
+      <summary class="key-product-group-head">
+        <span class="key-product-group-title">华夏全量 FOF · 速览</span>
+        <span class="key-product-group-count">${huaxiaAll.length} 只 · 在审 ${huaxiaInReviewCount} 只</span>
+      </summary>
       ${
         huaxiaAll.length
-          ? `<div class="huaxia-compact-list">${huaxiaAll
+          ? `<div class="huaxia-compact-list">${huaxiaPreview
               .map(
                 (row) => `
                   <div class="huaxia-compact-item clickable-row" data-product-id="${escapeHtml(row.product_id)}">
                     <div class="hc-top">
                       <div class="hc-name">${escapeHtml(row.fund_name)}</div>
-                      <span class="tag-chip is-stage">${escapeHtml(row.current_stage)}</span>
+                      <span class="tag-chip is-stage">${escapeHtml(row.current_stage || "—")}</span>
                     </div>
                     <div class="hc-meta">${escapeHtml(row.fof_type || "—")} · 最新 ${fmtDate(row.latest_event_date)}${
                       row.raise_scale != null ? ` · 募集 ${fmtNum(row.raise_scale)} 亿元` : ""
@@ -2437,10 +2814,26 @@ function renderKeyProducts() {
                   </div>
                 `
               )
-              .join("")}</div>`
+              .join("")}</div>${
+              huaxiaCollapsed.length
+                ? `<div class="huaxia-collapsed">${huaxiaCollapsed
+                    .map(
+                      (row) => `
+                        <div class="huaxia-compact-item clickable-row" data-product-id="${escapeHtml(row.product_id)}">
+                          <div class="hc-top">
+                            <div class="hc-name">${escapeHtml(row.fund_name)}</div>
+                            <span class="tag-chip is-stage">${escapeHtml(row.current_stage || "—")}</span>
+                          </div>
+                          <div class="hc-meta">${escapeHtml(row.fof_type || "—")} · 最新 ${fmtDate(row.latest_event_date)}</div>
+                        </div>
+                      `
+                    )
+                    .join("")}</div>`
+                : ""
+            }`
           : `<div class="empty-box">暂无华夏 FOF 数据。</div>`
       }
-    </div>
+    </details>
   `);
   container.innerHTML = parts.join("");
   bindClickableRows(container);
@@ -2464,7 +2857,7 @@ function buildCoverageMatrixMarkup() {
   pool.forEach((p) => {
     const profile = getProductProfile(p);
     const r = riskBuckets.includes(profile.riskBucket) ? profile.riskBucket : "平衡";
-    const h = holdingBuckets.includes(profile.holdingBucket) ? profile.holdingBucket : "其他持有";
+    const h = holdingBuckets.includes(profile.holdingBucket) ? profile.holdingBucket : "未标注持有期";
     const entry = cellData[`${r}|${h}`];
     if (p.fund_company === "华夏") entry.huaxia.push(p);
     else {
@@ -2854,7 +3247,9 @@ function renderKeyCompanyCards() {
           <div class="metric-row">
             <div class="metric-pill"><div class="label">存量FOF数</div><div class="value">${escapeHtml(row.stockProfile?.product_count ?? "—")}</div></div>
             <div class="metric-pill"><div class="label">养老FOF数</div><div class="value">${escapeHtml(row.stockProfile?.pension_count ?? "—")}</div></div>
-            <div class="metric-pill"><div class="label">较上期变化</div><div class="value">${fmtSignedNum(row.stockProfile?.scale_change)}</div></div>
+            <div class="metric-pill"><div class="label">同口径增长</div><div class="value">${fmtSignedNum(
+              row.stockProfile?.existing_scale_change ?? row.stockProfile?.scale_change
+            )}</div></div>
           </div>
           <div class="section-head compact" style="margin-top: 16px;">
             <div><h2 style="font-size:16px;">最新产品清单</h2></div>
@@ -2932,9 +3327,14 @@ function renderStockScaleProfile() {
       note: `最新规模 ${fmtNum(focus.latest_scale_sum)} 亿元`,
     },
     {
-      label: "较上期规模变化",
-      value: `${fmtSignedNum(profile.total_scale_change)} 亿元`,
-      note: `对比 ${fmtDate(profile.prev_scale_as_of_date)}`,
+      label: "存量增长（同口径）",
+      value: `${fmtSignedNum(profile.total_existing_scale_change ?? profile.total_scale_change)} 亿元`,
+      note: `两期都披露的 ${profile.total_comparable_count ?? "—"} 只 · 对比 ${fmtDate(profile.prev_scale_as_of_date)}`,
+    },
+    {
+      label: "本季度新发产品规模",
+      value: `${fmtNum(profile.total_new_fund_scale)} 亿元`,
+      note: `${profile.total_new_fund_count ?? 0} 只 · 上期未披露规模，单列不并入存量增长`,
     },
     {
       label: "补齐规模样本",
@@ -3056,7 +3456,12 @@ function renderStockScaleProfile() {
                 <div class="metric-pill"><div class="label">市占率</div><div class="value">${
                   row.scale_share_pct != null ? `${fmtNum(row.scale_share_pct, 2)}%` : "—"
                 }</div></div>
-                <div class="metric-pill"><div class="label">较上期变化</div><div class="value">${fmtSignedNum(row.scale_change)}</div></div>
+                <div class="metric-pill"><div class="label">同口径增长</div><div class="value">${fmtSignedNum(
+                  row.existing_scale_change ?? row.scale_change
+                )}</div></div>
+                <div class="metric-pill"><div class="label">新发(只/亿元)</div><div class="value">${escapeHtml(
+                  row.new_fund_count ?? 0
+                )} / ${fmtNum(row.new_fund_scale ?? 0)}</div></div>
               </div>
               <div class="section-head compact" style="margin-top: 16px;">
                 <div><h2 style="font-size:16px;">规模前三产品</h2></div>
@@ -3101,7 +3506,15 @@ function renderStockScaleProfile() {
           { label: "养老FOF", render: (row) => escapeHtml(row.pension_count) },
           { label: "最新规模(亿元)", render: (row) => fmtNum(row.latest_scale_sum) },
           { label: "市占率", render: (row) => (row.scale_share_pct != null ? `${fmtNum(row.scale_share_pct, 2)}%` : "—") },
-          { label: "较上期变化(亿元)", render: (row) => fmtSignedNum(row.scale_change) },
+          {
+            label: "同口径存量变化(亿元)",
+            render: (row) => `${fmtSignedNum(row.existing_scale_change ?? row.scale_change)}`,
+          },
+          {
+            label: "新发产品(只/亿元)",
+            render: (row) =>
+              `${escapeHtml(row.new_fund_count ?? 0)} / ${fmtNum(row.new_fund_scale ?? 0)}`,
+          },
           { label: "平均单只规模(亿元)", render: (row) => fmtNum(row.avg_latest_scale) },
           { label: "补齐样本", render: (row) => escapeHtml(row.repaired_scale_count ?? 0) },
         ],
@@ -3317,7 +3730,13 @@ function renderHuaxiaChase() {
       .map((row) => {
         const width = Math.max(10, (100 * (row.projected_floor_count || 0)) / maxFloor);
         const isCutoff = cutoffCompanies.includes(row.fund_company);
-        const gapText = row.is_focus_company ? `当前基线` : `领先华夏 ${row.count_gap_vs_focus > 0 ? row.count_gap_vs_focus : 0} 只`;
+        const gapText = row.is_focus_company
+          ? "当前基线"
+          : row.count_gap_vs_focus > 0
+            ? `领先华夏 ${row.count_gap_vs_focus} 只`
+            : row.count_gap_vs_focus < 0
+              ? `落后华夏 ${Math.abs(row.count_gap_vs_focus)} 只`
+              : "与华夏并列";
         return `
           <article class="chase-race-row ${row.is_focus_company ? "is-focus" : ""} ${isCutoff ? "is-cutoff" : ""}">
             <div class="chase-race-top">
@@ -3401,7 +3820,16 @@ function renderHuaxiaChase() {
           { label: "已成立数", render: (row) => escapeHtml(row.establish_count) },
           { label: "在途数", render: (row) => escapeHtml(row.pipeline_count) },
           { label: "年底保底数", render: (row) => escapeHtml(row.projected_floor_count) },
-          { label: "领先华夏(只)", render: (row) => escapeHtml(row.count_gap_vs_focus > 0 ? row.count_gap_vs_focus : 0) },
+          {
+            label: "对华夏差距",
+            render: (row) => {
+              if (row.is_focus_company) return "—";
+              const gap = row.count_gap_vs_focus;
+              if (gap > 0) return `领先 ${gap}`;
+              if (gap < 0) return `落后 ${Math.abs(gap)}`;
+              return "持平";
+            },
+          },
           { label: "募集规模(亿元)", render: (row) => fmtNum(row.raise_scale_sum) },
           {
             label: "平均申报到成立(天)",
@@ -3677,9 +4105,7 @@ function renderDrawer() {
 function wireEvents() {
   document.querySelectorAll("#main-tabs .tab").forEach((button) => {
     button.addEventListener("click", () => {
-      state.activeTab = button.dataset.tab;
-      activateTabs();
-      if (state.activeTab === "detail") renderDetail();
+      switchTab(button.dataset.tab);
     });
   });
 
@@ -3770,6 +4196,7 @@ function wireEvents() {
 
 function renderAll() {
   activateTabs();
+  renderTopbarStamp();
   renderRailNav();
   renderGlobalSlice();
   renderHero();
@@ -3779,6 +4206,7 @@ function renderAll() {
   renderWatchFeed();
   renderForecastTimeline();
   renderDensityAlerts();
+  renderCustodianBoard();
   renderMacroClock();
   renderSoftIntelBoard();
   renderPipeline();
@@ -3806,6 +4234,7 @@ getData()
   .then((data) => {
     state.data = data;
     state.watchCompanies = loadWatchCompanies();
+    clearInsightCache();
     wireEvents();
     renderAll();
   })
