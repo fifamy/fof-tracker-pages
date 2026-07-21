@@ -167,7 +167,7 @@ function getCurrentPeriodMeta() {
     const range = state.data.summary.week_range;
     return {
       key: "week",
-      title: "近一周",
+      title: "最近完整周",
       label: range.label || `${range.start}~${range.end}`,
       start: range.start,
       end: range.end,
@@ -181,6 +181,10 @@ function getCurrentPeriodMeta() {
     start: range.start,
     end: range.end,
   };
+}
+
+function periodTitle(periodKey = state.topPeriod) {
+  return periodKey === "week" ? "最近完整周" : "今年以来";
 }
 
 function daysBetween(startValue, endValue) {
@@ -959,7 +963,7 @@ function bindClickableRows(container, options = {}) {
 function renderHero() {
   const summary = state.data.summary;
   const range = state.topPeriod === "week" ? summary.week_range : summary.ytd_range;
-  const prefix = state.topPeriod === "week" ? "近一周" : "今年以来";
+  const prefix = periodTitle();
   const topSignals = ((summary.stage_sections[state.topPeriod] || {}).declare || []).length;
   const huaxiaPipeline = state.data.products.filter((item) => item.fund_company === "华夏" && isInReviewProduct(item)).length;
   const stockProfile = getStockScaleProfile();
@@ -985,7 +989,7 @@ function renderHero() {
 }
 
 function renderKPIs() {
-  const titlePrefix = state.topPeriod === "week" ? "近一周" : "今年以来";
+  const titlePrefix = periodTitle();
   const range = getPeriodRange(state.topPeriod);
   const sliced = getSlicedProducts();
   const inDateRange = (product, dateField) => inRange(product[dateField], range.start, range.end);
@@ -1094,7 +1098,7 @@ function renderKpiDrill() {
   }
   const range = getPeriodRange(state.topPeriod);
   const sliced = getSlicedProducts();
-  const periodLabel = state.topPeriod === "week" ? "近一周" : "今年以来";
+  const periodLabel = periodTitle();
   const slicePrefix = sliceIsActive() ? `${GLOBAL_SLICES.find((s) => s.key === state.globalSlice)?.label || ""} 切片 · ` : "";
   let title = "";
   let rows = [];
@@ -1727,6 +1731,8 @@ function renderCustodianBoard() {
   if (tableEl) {
     if (!allRows.length) {
       tableEl.innerHTML = `<div class="empty-box">暂无可展示的渠道总表数据。</div>`;
+    } else if (!rows.length) {
+      tableEl.innerHTML = `<div class="empty-box">当前筛选条件下暂无渠道总表数据。</div>`;
     } else {
       tableEl.innerHTML = tableMarkup(
         [
@@ -1763,7 +1769,7 @@ function renderCustodianBoard() {
                 .join("、") || "—",
           },
         ],
-        allRows,
+        rows,
         false
       );
     }
@@ -2134,7 +2140,7 @@ function renderSignalSummary() {
   const macroRows = rows.filter((item) => getMacroMatch(item)).length;
   container.innerHTML = [
     { label: "当前命中", value: rows.length, note: `当前展示口径：${monitor.resolvedStage.label}` },
-    { label: "本期新申报", value: declareRows.length, note: `${state.topPeriod === "week" ? "近一周" : "今年以来"}新进入池子的产品` },
+    { label: "本期新申报", value: declareRows.length, note: `${periodTitle()}新进入池子的产品` },
     { label: "华夏空白", value: gapCount, note: "竞品已卡位但华夏暂无同类" },
     { label: "重点防守", value: defendCount, note: "重点公司或直接对标华夏的产品" },
     { label: "宏观命中", value: macroRows, note: "符合当前投资时钟阶段的产品" },
@@ -2267,7 +2273,7 @@ function renderLaunchBattlefield() {
   return `
     <div class="battlefield-summary">
       <div class="battlefield-headline">
-        <strong>${escapeHtml(state.topPeriod === "week" ? "近一周" : "今年以来")}</strong>
+        <strong>${escapeHtml(periodTitle())}</strong>
         发行节奏看板聚焦“谁在成立、谁在吸金、华夏差多少”。
       </div>
       ${
@@ -2327,7 +2333,7 @@ function renderMatrixBattlefield() {
     <div class="battlefield-summary">
       <div class="battlefield-headline"><strong>产品矩阵雷达</strong> 把“持有期 × 风险收益特征”压成一张空白网格，直接看竞品卡位和华夏缺口。</div>
       <div class="battlefield-caption">底图纳入 ${fmtDate(profileDate)} 存量 FOF ${escapeHtml(totalStockCount)} 只；米色代表华夏存量，灰绿色代表同业存量，红色代表${
-        state.topPeriod === "week" ? "近一周" : "今年以来"
+        periodTitle()
       }新申报，蓝色代表新成立。</div>
     </div>
     <div class="matrix-grid">
@@ -2558,32 +2564,6 @@ function renderStageSections() {
   bindClickableRows(container);
 }
 
-function renderKeyCompanyUpdates() {
-  const container = document.getElementById("key-company-updates");
-  if (!container) return;
-  const rows = getProductsForTopPeriod((item) => item.is_key_company)
-    .sort((a, b) => String(b.latest_event_date || "").localeCompare(String(a.latest_event_date || "")))
-    .slice(0, 8);
-  container.innerHTML = rows.length
-    ? `<div class="mini-list">${rows
-        .map(
-          (row) => `
-            <div class="mini-item clickable-row" data-product-id="${escapeHtml(row.product_id)}">
-              <div class="mini-top">
-                <div class="mini-name">${escapeHtml(row.fund_name)}</div>
-                <span class="pill">${escapeHtml(row.current_stage)}</span>
-              </div>
-              <div class="mini-meta">${escapeHtml(row.fund_company)} · ${escapeHtml(row.fof_type)} · 最新日期 ${fmtDate(
-                row.latest_event_date
-              )}</div>
-            </div>
-          `
-        )
-        .join("")}</div>`
-    : `<div class="empty-box">暂无重点公司新增动作。</div>`;
-  bindClickableRows(container);
-}
-
 function renderInReviewPool() {
   const rows = state.data.products
     .filter(isInReviewProduct)
@@ -2640,7 +2620,7 @@ function renderTrendChart() {
   const margin = { top: 52, right: 72, bottom: 66, left: 54 };
   const chartW = width - margin.left - margin.right;
   const chartH = height - margin.top - margin.bottom;
-  const maxCount = Math.max(...rows.map((item) => item.establish_count), 1);
+  const maxCount = Math.max(...rows.map((item) => item.action_count ?? item.establish_count ?? 0), 1);
   const maxScale = Math.max(...rows.map((item) => item.raise_scale), 1);
   const countTicks = 4;
   const scaleTicks = 4;
@@ -2659,7 +2639,7 @@ function renderTrendChart() {
     const cy = yScale(row.raise_scale);
     path += `${i === 0 ? "M" : "L"} ${cx} ${cy} `;
   });
-  let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="近8周成立与募集趋势">`;
+  let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="近8周流程动作与成立募集趋势">`;
   svg += `<rect x="0" y="0" width="${width}" height="${height}" rx="22" fill="rgba(255,255,255,0.55)" />`;
   for (let i = 0; i <= countTicks; i += 1) {
     const value = (maxCount / countTicks) * i;
@@ -2672,16 +2652,17 @@ function renderTrendChart() {
     const y = margin.top + chartH - (chartH / scaleTicks) * i;
     svg += `<text x="${margin.left + chartW + 12}" y="${y + 4}" text-anchor="start" font-size="11" fill="#c1121f">${fmtNum(value)}</text>`;
   }
-  svg += `<text x="${margin.left}" y="${margin.top - 24}" font-size="12" font-weight="700" fill="#224870">成立数量（左轴）</text>`;
-  svg += `<text x="${margin.left + chartW}" y="${margin.top - 24}" text-anchor="end" font-size="12" font-weight="700" fill="#c1121f">募集规模（右轴，亿元）</text>`;
+  svg += `<text x="${margin.left}" y="${margin.top - 24}" font-size="12" font-weight="700" fill="#224870">流程动作数（左轴）</text>`;
+  svg += `<text x="${margin.left + chartW}" y="${margin.top - 24}" text-anchor="end" font-size="12" font-weight="700" fill="#c1121f">成立募集规模（右轴，亿元）</text>`;
   rows.forEach((row, i) => {
-    const barY = yCount(row.establish_count);
+    const actionCount = row.action_count ?? row.establish_count ?? 0;
+    const barY = yCount(actionCount);
     const barH = margin.top + chartH - barY;
     const partial = row.is_partial_week;
     svg += `<rect x="${x(i)}" y="${barY}" width="${barW}" height="${barH}" rx="14" fill="#224870" opacity="${partial ? 0.32 : 0.84}"${partial ? ' stroke="#224870" stroke-dasharray="4 3" stroke-width="1.4"' : ""} />`;
-    if (row.establish_count > 0) {
+    if (actionCount > 0) {
       svg += `<rect x="${x(i) + barW / 2 - 14}" y="${barY - 24}" width="28" height="18" rx="9" fill="#eef4fb" />`;
-      svg += `<text x="${x(i) + barW / 2}" y="${barY - 11}" text-anchor="middle" font-size="11" font-weight="700" fill="#224870">${row.establish_count}</text>`;
+      svg += `<text x="${x(i) + barW / 2}" y="${barY - 11}" text-anchor="middle" font-size="11" font-weight="700" fill="#224870">${actionCount}</text>`;
     }
     if (partial) {
       svg += `<text x="${x(i) + barW / 2}" y="${margin.top + chartH + 18}" text-anchor="middle" font-size="10" fill="#9b6e1f">当前周·未完整</text>`;
@@ -3120,6 +3101,7 @@ function renderCompanyTable() {
       { label: "申报数", key: "declare_count" },
       { label: "受理数", key: "accept_count" },
       { label: "获批数", key: "approval_count" },
+      { label: "承接前期获批", render: (row) => escapeHtml(row.carried_prior_approval_count ?? 0) },
       { label: "发行数", key: "issue_count" },
       { label: "成立数", key: "establish_count" },
       { label: "募集规模(亿元)", render: (row) => fmtNum(row.raise_scale_sum) },
@@ -3156,7 +3138,7 @@ function renderKeyCompanyProgress() {
   container.innerHTML = `
     <div class="progress-panel-head">
       <div class="progress-panel-kicker">YTD Dashboard</div>
-      <div class="progress-panel-note">右侧为已成立产品募集规模；公司名下补充显示存量 FOF 最新规模与排名</div>
+      <div class="progress-panel-note">获批为本年新获批；括号内为前期已获批、今年发行或成立的承接产品。</div>
     </div>
     <div class="progress-compare">
       <div class="progress-head">
@@ -3164,7 +3146,7 @@ function renderKeyCompanyProgress() {
         <div>申报</div>
         <div>受理</div>
         <div>获批</div>
-        <div>发行</div>
+        <div>发行 / 成立</div>
         <div>募集规模(亿元)</div>
       </div>
       ${rows
@@ -3197,6 +3179,11 @@ function renderKeyCompanyProgress() {
               </div>
               <div class="progress-cell">
                 <div class="progress-value">${escapeHtml(row.approval_count)}</div>
+                ${
+                  row.carried_prior_approval_count
+                    ? `<div class="progress-subvalue">承接 ${escapeHtml(row.carried_prior_approval_count)}</div>`
+                    : `<div class="progress-subvalue muted">承接 0</div>`
+                }
                 <div class="progress-bar-track"><div class="progress-bar-fill blue" style="width:${approvalWidth}%"></div></div>
               </div>
               <div class="progress-cell">
@@ -3232,7 +3219,7 @@ function renderKeyCompanyCards() {
         <article class="company-mini-card">
           <h3>${escapeHtml(row.fund_company)}</h3>
             <div class="metric-row">
-            <div class="metric-pill"><div class="label">近一周动作</div><div class="value">${escapeHtml(row.recent_action_count)}</div></div>
+            <div class="metric-pill"><div class="label">完整周动作</div><div class="value">${escapeHtml(row.recent_action_count)}</div></div>
             <div class="metric-pill"><div class="label">今年以来动作</div><div class="value">${escapeHtml(row.ytd_action_count)}</div></div>
             <div class="metric-pill"><div class="label">在审产品</div><div class="value">${escapeHtml(row.in_review_count)}</div></div>
             <div class="metric-pill"><div class="label">已成立产品</div><div class="value">${escapeHtml(row.established_count)}</div></div>
@@ -4119,7 +4106,6 @@ function wireEvents() {
       renderSignalSummary();
       renderSignalRadar();
       renderStageSections();
-      renderKeyCompanyUpdates();
       renderInReviewPool();
       renderPipeline();
       renderKeyProducts();
@@ -4215,7 +4201,6 @@ function renderAll() {
   renderSignalSummary();
   renderSignalRadar();
   renderStageSections();
-  renderKeyCompanyUpdates();
   renderInReviewPool();
   renderTrendChart();
   renderKeyProducts();

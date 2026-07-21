@@ -8,7 +8,7 @@
       name="description"
       content="跟踪全市场公募FOF的申报、受理、获批、发行、成立情况，并支持重点基金公司竞争格局观察。"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260507-ui14" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-approvalfix" />
   </head>
   <body>
     <div class="shell">
@@ -52,7 +52,7 @@
             </div>
             <div class="toolbar">
               <div class="time-toggle" id="top-period-toggle">
-                <button class="chip is-active" data-period="week">近一周</button>
+                <button class="chip is-active" data-period="week">最近完整周</button>
                 <button class="chip" data-period="ytd">今年以来</button>
               </div>
               <div class="tab-toggle" id="main-tabs" role="tablist" aria-label="模块切换">
@@ -89,8 +89,8 @@
                 <section class="card">
                   <div class="section-head compact">
                     <div>
-                      <h2>近8周成立与募集趋势</h2>
-                      <p>看近期成立数量与募集规模变化。</p>
+                      <h2>近8周流程动作与募集趋势</h2>
+                      <p>看自然周内申报、受理、获批、发行、成立动作，以及成立募集规模变化。</p>
                     </div>
                   </div>
                   <div id="trend-chart"></div>
@@ -176,7 +176,7 @@
                   <span>时间范围</span>
                   <select id="tracker-period">
                     <option value="all">全部</option>
-                    <option value="week">近一周</option>
+                    <option value="week">最近完整周</option>
                     <option value="ytd">今年以来</option>
                   </select>
                 </label>
@@ -234,7 +234,7 @@
               <div class="section-head">
                 <div>
                   <h2>重点公司对比</h2>
-                  <p>基于配置名单，重点观察近一周动作、今年以来推进节奏与在审储备。</p>
+                  <p>基于配置名单，重点观察最近完整周动作、今年以来推进节奏与在审储备。</p>
                 </div>
               </div>
               <div class="company-card-grid" id="key-company-cards"></div>
@@ -244,14 +244,14 @@
               <div class="section-head">
                 <div>
                   <h2>公司竞争格局</h2>
-                  <p>按近一周和今年以来跟踪基金公司动作与成立表现。</p>
+                  <p>按最近完整周和今年以来跟踪基金公司动作与成立表现。</p>
                 </div>
               </div>
               <div class="inline-actions">
                 <div class="toggle-group">
                   <div class="toggle-label">时间维度</div>
                   <div class="subtabs" id="company-period-toggle">
-                    <button class="subtab is-active" data-period="week">近一周</button>
+                    <button class="subtab is-active" data-period="week">最近完整周</button>
                     <button class="subtab" data-period="ytd">今年以来</button>
                   </div>
                 </div>
@@ -479,7 +479,7 @@
       <div class="drawer-body" id="drawer-content"></div>
     </aside>
 
-    <script src="./data/fof_tracker_snapshot.js?v=20260507-ui14"></script>
-    <script src="./app.js?v=20260507-ui14"></script>
+    <script src="./data/fof_tracker_snapshot.js?v=20260617-approvalfix"></script>
+    <script src="./app.js?v=20260617-approvalfix"></script>
   </body>
 </html>

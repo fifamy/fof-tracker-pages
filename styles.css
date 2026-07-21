@@ -2530,6 +2530,18 @@ input[type="search"]:focus {
 
 .progress-value { font-size: 11px; color: var(--muted); font-feature-settings: "tnum" 1; }
 
+.progress-subvalue {
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.progress-subvalue.muted {
+  color: var(--muted);
+  font-weight: 500;
+}
+
 .progress-bar-track {
   height: 6px;
   border-radius: 999px;
