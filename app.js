@@ -928,7 +928,7 @@ function renderTopbarStamp() {
   stamp.innerHTML = `
     <span class="stamp-pill" title="数据截止日">截止 ${escapeHtml(asOf)}</span>
     <span class="stamp-pill subtle" title="snapshot 生成时间">生成 ${escapeHtml(generated)}</span>
-    ${stockDate ? `<span class="stamp-pill subtle" title="存量规模口径来自基金画像季报">存量口径 ${escapeHtml(stockDate)}</span>` : ""}
+    ${stockDate ? `<span class="stamp-pill subtle" title="存量规模口径来自基金画像表">存量口径 ${escapeHtml(stockDate)}</span>` : ""}
   `;
 }
 
@@ -3291,6 +3291,8 @@ function renderStockScaleProfile() {
   const pension = (profile.type_breakdown || []).find((item) => item.fof_type === "养老FOF") || {};
   const scaleGap = Number(target.scale_gap_vs_focus) || 0;
   const topCompanyNames = (profile.top_companies || []).map((item) => item.fund_company).join("、");
+  const comparisonDate = profile.prev_scale_as_of_date ? fmtDate(profile.prev_scale_as_of_date) : "比较基准日";
+  const comparisonLabel = profile.prev_scale_as_of_date ? `较${comparisonDate}` : "较基准日";
 
   const kpis = [
     {
@@ -3314,19 +3316,19 @@ function renderStockScaleProfile() {
       note: `最新规模 ${fmtNum(focus.latest_scale_sum)} 亿元`,
     },
     {
-      label: "存量增长（同口径）",
+      label: "可比存量变化",
       value: `${fmtSignedNum(profile.total_existing_scale_change ?? profile.total_scale_change)} 亿元`,
-      note: `两期都披露的 ${profile.total_comparable_count ?? "—"} 只 · 对比 ${fmtDate(profile.prev_scale_as_of_date)}`,
+      note: `${comparisonLabel} · 两个日期都有规模的${profile.total_comparable_count ?? "—"}只`,
     },
     {
-      label: "本季度新发产品规模",
+      label: "基准日后新增规模",
       value: `${fmtNum(profile.total_new_fund_scale)} 亿元`,
-      note: `${profile.total_new_fund_count ?? 0} 只 · 上期未披露规模，单列不并入存量增长`,
+      note: `${profile.total_new_fund_count ?? 0}只 · ${comparisonDate}无规模、本期有规模`,
     },
     {
-      label: "补齐规模样本",
-      value: profile.repaired_scale_count ?? 0,
-      note: "曾标记缺失，但当前主表已补齐规模值",
+      label: "最新规模覆盖率",
+      value: profile.latest_scale_coverage_pct != null ? `${fmtNum(profile.latest_scale_coverage_pct, 2)}%` : "—",
+      note: `${profile.latest_scale_sample_count ?? "—"}/${profile.product_count ?? "—"}只 · 缺失${profile.latest_scale_missing_count ?? "—"}只`,
     },
   ];
   kpiContainer.innerHTML = kpis
@@ -3355,7 +3357,8 @@ function renderStockScaleProfile() {
         <p>
           当前口径来自 <strong>${escapeHtml(profile.source_file || "基金画像表")}</strong> 的
           <strong>${escapeHtml(profile.source_sheet || "基金画像")}</strong> 工作表，统计日期为
-          <strong>${fmtDate(profile.scale_as_of_date)}</strong>。
+          <strong>${fmtDate(profile.scale_as_of_date)}</strong>，比较基准日为
+          <strong>${comparisonDate}</strong>。
           全市场存量 FOF 共 <strong>${escapeHtml(profile.product_count ?? 0)} 只</strong>，
           合计最新规模 <strong>${fmtNum(profile.total_latest_scale)} 亿元</strong>，
           头部公司主要是 ${escapeHtml(topCompanyNames || "—")}。
@@ -3443,10 +3446,10 @@ function renderStockScaleProfile() {
                 <div class="metric-pill"><div class="label">市占率</div><div class="value">${
                   row.scale_share_pct != null ? `${fmtNum(row.scale_share_pct, 2)}%` : "—"
                 }</div></div>
-                <div class="metric-pill"><div class="label">同口径增长</div><div class="value">${fmtSignedNum(
+                <div class="metric-pill"><div class="label">${escapeHtml(comparisonLabel)}变化</div><div class="value">${fmtSignedNum(
                   row.existing_scale_change ?? row.scale_change
                 )}</div></div>
-                <div class="metric-pill"><div class="label">新发(只/亿元)</div><div class="value">${escapeHtml(
+                <div class="metric-pill"><div class="label">新增样本(只/亿元)</div><div class="value">${escapeHtml(
                   row.new_fund_count ?? 0
                 )} / ${fmtNum(row.new_fund_scale ?? 0)}</div></div>
               </div>
@@ -3494,11 +3497,11 @@ function renderStockScaleProfile() {
           { label: "最新规模(亿元)", render: (row) => fmtNum(row.latest_scale_sum) },
           { label: "市占率", render: (row) => (row.scale_share_pct != null ? `${fmtNum(row.scale_share_pct, 2)}%` : "—") },
           {
-            label: "同口径存量变化(亿元)",
+            label: `${comparisonLabel}可比变化(亿元)`,
             render: (row) => `${fmtSignedNum(row.existing_scale_change ?? row.scale_change)}`,
           },
           {
-            label: "新发产品(只/亿元)",
+            label: "新增规模样本(只/亿元)",
             render: (row) =>
               `${escapeHtml(row.new_fund_count ?? 0)} / ${fmtNum(row.new_fund_scale ?? 0)}`,
           },
@@ -3518,7 +3521,7 @@ function renderStockScaleProfile() {
           { label: "基金公司", key: "fund_company" },
           { label: "FOF类型", key: "fof_type" },
           { label: "最新规模(亿元)", render: (row) => fmtNum(row.latest_scale) },
-          { label: "较上期变化(亿元)", render: (row) => fmtSignedNum(row.scale_change) },
+          { label: `${comparisonLabel}变化(亿元)`, render: (row) => fmtSignedNum(row.scale_change) },
         ],
         topProducts,
         false
@@ -3538,7 +3541,7 @@ function renderStockScaleProfile() {
         repairedRows,
         false
       )
-    : `<div class="empty-box">当前没有已补齐规模样本。</div>`;
+    : `<div class="empty-box">当前没有需要复核的规模样本。</div>`;
 }
 
 function renderHuaxiaChase() {
